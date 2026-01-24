@@ -96,9 +96,9 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     PRETRAINING_CONFIG = {
         "n_epochs": 1,
-        "print_sample_iter": 1000,
-        "eval_freq": 100,
-        "save_ckpt_freq": 100000,
+        "print_sample_iter": 50,
+        "eval_freq": 5,
+        "save_ckpt_freq": 25,
         "learning_rate": 0.0005,
         "batch_size": 4,
         "test_context": "What do llamas eat?",
@@ -108,9 +108,9 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     FINETUNING_CONFIG = {
         "n_epochs": 1,
-        "print_sample_iter": 1000,
-        "eval_freq": 100,
-        "save_ckpt_freq": 100000,
+        "print_sample_iter": 50,
+        "eval_freq": 5,
+        "save_ckpt_freq": 25,
         "learning_rate": 0.0005,
         "batch_size": 4,
         "system_context": "You are a helpful assistant.",

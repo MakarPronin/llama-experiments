@@ -74,7 +74,7 @@ def print_eta(start_time, book_start_time, index, total_files):
 
     print(f"Training file processed {book_h}h {book_m}m {book_s}s"
           f"\nTotal time elapsed {total_h}h {total_m}m {total_s}s"
-          f"\nETA for remaining training file: {eta_h}h {eta_m}m {eta_s}s")
+          f"\nETA for remaining training files: {eta_h}h {eta_m}m {eta_s}s")
 
 
 def download_file(file_path, url, show_progress=True, verbose=True, verify=True):
