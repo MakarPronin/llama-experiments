@@ -191,7 +191,7 @@ def train(
         eval_freq=eval_freq,
         eval_iter=1,
         print_sample_iter=print_sample_iter,
-        checkpoints_filename=checkpoint_file_path,
+        checkpoint_file_path=checkpoint_file_path,
         save_ckpt_freq=save_ckpt_freq,
         test_context=test_context,
         tokenizer=tokenizer, #regular tokenizer
