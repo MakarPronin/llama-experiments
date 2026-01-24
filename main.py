@@ -71,19 +71,19 @@ Source: "Build a Large Language Model From Scratch"\n\
     #EDITABLE CONFIGS SECTION
     LLAMA32_CONFIG_CUSTOM = {
         "vocab_size": 128256,            # Vocabulary size
-        "context_length": 131072,        # Context length that was used to train the model
-        "emb_dim": 2048,                 # Embedding dimension
-        "n_heads": 32,                   # Number of attention heads
-        "n_layers": 16,                  # Number of layers
-        "hidden_dim": 8192,              # Size of the intermediate dimension in FeedForward
-        "n_kv_groups": 8,                # Key-Value groups for grouped-query attention
+        "context_length": 1024,          # Context length that was used to train the model
+        "emb_dim": 1024,                 # Embedding dimension
+        "n_heads": 16,                   # Number of attention heads
+        "n_layers": 12,                  # Number of layers
+        "hidden_dim": 4096,              # Size of the intermediate dimension in FeedForward
+        "n_kv_groups": 4,                # Key-Value groups for grouped-query attention
         "rope_base": 500000,             # The base in RoPE's "theta"
         "dtype": torch.bfloat16,         # Lower-precision dtype to reduce memory usage
         "rope_freq": {                   # RoPE frequency scaling
-            "factor": 32,
+            "factor": 1,
             "low_freq_factor": 1,
             "high_freq_factor": 4,
-            "original_context_length": 8192,
+            "original_context_length": 1024,
         }
     }
 
