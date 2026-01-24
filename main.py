@@ -174,7 +174,7 @@ Source: "Build a Large Language Model From Scratch"\n\
 
 
 
-    should_download_weights = get_validated_input("WEIGHTS: Do you want to download Llama weights?", "bool", "y")
+    should_download_weights = get_validated_input("WEIGHTS: Do you want to download standard Llama 3.2 weights? They will not work with a custom model configuration.", "bool", "y")
     if should_download_weights:
         alt_weights_source = get_validated_input("WEIGHTS: Do you want to download Llama weights from an ungated source (https://huggingface.co/huihui-ai/Llama-3.2-1B-Instruct-abliterated)?", "bool", "y")
 
