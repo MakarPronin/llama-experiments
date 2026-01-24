@@ -55,7 +55,7 @@ def count_unique_parameters(model):
 
 def get_model_stats(model):
     print(f"float32 (PyTorch default): {model_memory_size(model, input_dtype=torch.float32):.2f} GB")
-    print(f"bfloat16: {model_memory_size(model, input_dtype=torch.bfloat16):.2f} GB")
+    print(f"bfloat16 (default for Llama): {model_memory_size(model, input_dtype=torch.bfloat16):.2f} GB")
 
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total number of parameters: {total_params:,}")
