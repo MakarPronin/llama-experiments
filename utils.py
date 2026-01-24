@@ -43,13 +43,13 @@ def get_device(verbose=False):
     return device
 
 def read_text_file(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(file_path, "r", encoding="utf-8", errors='ignore') as file:
         text_data = file.read()
     return text_data
 
 
 def read_json_file(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(file_path, "r", encoding="utf-8", errors='ignore') as file:
         json_data = json.load(file)
     return json_data
 
