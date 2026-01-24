@@ -230,7 +230,7 @@ Source: "Build a Large Language Model From Scratch"\n\
 
 
 
-    should_load_weights = get_validated_input("LOADING MODEL: Do you want to load weights (model.safetensors or model-00001-of-00002.safetensors, model-00002-of-00002.safetensors) into the model? Weights will be saved to model_checkpoint.pth that is loaded during training and generation.", "bool", "n")
+    should_load_weights = get_validated_input("LOADING MODEL: Do you want to load weights (model.safetensors or model-00001-of-00002.safetensors, model-00002-of-00002.safetensors) into the model? Weights will be saved to model_checkpoint.pth that is loaded during training and generation.", "bool", "y")
     if should_load_weights:
         llama_size_str = "1B" if llama32_config["emb_dim"] == 2048 else "3B"
         if llama_size_str == "1B":
