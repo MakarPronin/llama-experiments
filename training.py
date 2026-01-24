@@ -132,7 +132,7 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                     if global_step % print_sample_iter == 0:
                         model.eval()
                         output_text = generate_text_simple(model, llama32_config, tokenizer, device, test_context)
-                        print(output_text.replace("\n", " "))  # Compact print format
+                        print("Generated sample: ", output_text.replace("\n", " "))  # Compact print format
                         model.train()
 
                 if global_step % save_ckpt_freq == 0:
