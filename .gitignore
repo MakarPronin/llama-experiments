@@ -7,7 +7,7 @@ model-00002-of-00002.safetensors
 instruction-data.json
 chat-data.json
 model_checkpoint.pth
-loss-plot.pdf
+loss-plot_*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
