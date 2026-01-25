@@ -90,7 +90,7 @@ Source: "Build a Large Language Model From Scratch"\n\
     GUTENBERG_CONFIG = {
         "delay": 2,
         "languages": ['en'],
-        "max_books": 100,
+        "max_books": 1000,
         "url": "https://www.gutenberg.org/robot/harvest"
     }
 
@@ -98,9 +98,9 @@ Source: "Build a Large Language Model From Scratch"\n\
         "n_epochs": 1,
         "print_sample_iter": 50,
         "eval_freq": 5,
-        "save_ckpt_freq": 25,
+        "save_ckpt_freq": 50,
         "learning_rate": 0.0005,
-        "batch_size": 4,
+        "batch_size": 5,
         "test_context": "What do llamas eat?",
         "llama32_config": llama32_config,
         "seed": 123
@@ -110,9 +110,9 @@ Source: "Build a Large Language Model From Scratch"\n\
         "n_epochs": 1,
         "print_sample_iter": 50,
         "eval_freq": 5,
-        "save_ckpt_freq": 25,
+        "save_ckpt_freq": 50,
         "learning_rate": 0.0005,
-        "batch_size": 4,
+        "batch_size": 5,
         "system_context": "You are a helpful assistant.",
         "test_prompt": "What do llamas eat?",
         "llama32_config": llama32_config,
