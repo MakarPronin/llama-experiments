@@ -175,7 +175,6 @@ def download_gutenberg_books(
     prev_url = None
     original_url = url
     while len(file_links) < max_books and url is not prev_url:
-        prev_url = url
         if url is not original_url:
             time.sleep(delay)
 
@@ -196,7 +195,9 @@ def download_gutenberg_books(
                 new_file_links.append(link)
             else:
                 url = link # this is supposed to be a next page link
+                
         file_links.extend(new_file_links)
+        prev_url = url
 
     file_links = file_links[:max_books] 
 
