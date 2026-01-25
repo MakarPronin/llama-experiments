@@ -159,11 +159,8 @@ def download_gutenberg_books(
     delay=2, 
     languages=['en'],
     max_books=100,
-    url=None
+    url="https://www.gutenberg.org/robot/harvest"
 ):
-    if url is None:
-        url = "https://www.gutenberg.org/robot/harvest"
-
     # 1. Setup Directory
     if not os.path.exists(directory):
         os.makedirs(directory)
