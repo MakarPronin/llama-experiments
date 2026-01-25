@@ -187,7 +187,7 @@ def download_gutenberg_books(
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
-        links = [a['href'] for a in soup.find_all('a', href=True)]
+        links = [urljoin(url, a['href']) for a in soup.find_all('a', href=True)]
 
         new_file_links = []
         prev_url = url
