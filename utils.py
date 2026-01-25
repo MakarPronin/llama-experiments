@@ -23,7 +23,7 @@ import urllib3
 import requests
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urljoin
 
 
 def get_device(verbose=False):
@@ -181,7 +181,7 @@ def download_gutenberg_books(
             harvest_url = url
         else:
             separator = "&" if "?" in url else "?"
-            harvest_url = f"{url}{separator}{urlencode(params)}"
+            harvest_url = f"{url}{separator}{params}"
         
         # 3. Fetch the harvest page
         print(f"Fetching harvest list from: {harvest_url}")
