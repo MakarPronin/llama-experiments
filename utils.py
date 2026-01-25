@@ -190,6 +190,7 @@ def download_gutenberg_books(
         links = [a['href'] for a in soup.find_all('a', href=True)]
 
         new_file_links = []
+        prev_url = url
         for link in links:
             if link.endswith(('.zip')):
                 new_file_links.append(link)
@@ -197,7 +198,6 @@ def download_gutenberg_books(
                 url = link # this is supposed to be a next page link
                 
         file_links.extend(new_file_links)
-        prev_url = url
 
     file_links = file_links[:max_books] 
 
