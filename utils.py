@@ -172,14 +172,16 @@ def download_gutenberg_books(
         params.append(('langs[]', lang))
     
     file_links = []
-    prev_url = None
+    total_files = len(file_links)
     original_url = url
+    prev_url = None
     while len(file_links) < max_books and url is not prev_url:
         if url is not original_url:
             time.sleep(delay)
-
-        separator = "&" if "?" in url else "?"
-        harvest_url = f"{url}{separator}{urlencode(params)}"
+            harvest_url = url
+        else:
+            separator = "&" if "?" in url else "?"
+            harvest_url = f"{url}{separator}{urlencode(params)}"
         
         # 3. Fetch the harvest page
         print(f"Fetching harvest list from: {harvest_url}")
@@ -198,11 +200,10 @@ def download_gutenberg_books(
                 url = link # this is supposed to be a next page link
                 
         file_links.extend(new_file_links)
+        total_files = len(file_links)
+        print(f"Found {max(total_files, max_books)}/{max_books} files.")
 
-    file_links = file_links[:max_books] 
-
-    total_files = len(file_links)
-    print(f"Found {total_files} files to download (capped at {max_books}).")
+    file_links = file_links[:max_books]
 
     # 4. Download Loop with Extraction
     with tqdm(total=total_files, desc="Overall Progress", unit="book") as pbar:
