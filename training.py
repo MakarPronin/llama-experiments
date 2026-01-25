@@ -81,7 +81,7 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                 book_start_time = time.time()
                 print(f"Tokenizing file {index} of {total_files}: {file_path}")
 
-                if file_path.endswith(".json"):
+                if file_path.suffix == ".json":
                     json_data = read_json_file(file_path)
 
                     # Initialize new data loaders for each book
