@@ -91,7 +91,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "delay": 2,
         "languages": ['en'],
         "max_books": 100,
-        "url": None
+        "url": "https://www.gutenberg.org/robot/harvest"
     }
 
     PRETRAINING_CONFIG = {
