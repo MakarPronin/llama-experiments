@@ -172,8 +172,10 @@ def download_gutenberg_books(
         params.append(('langs[]', lang))
     
     file_links = []
+    prev_url = None
     original_url = url
-    while len(file_links) < max_books and url is not original_url:
+    while len(file_links) < max_books and url is not prev_url:
+        prev_url = url
         if url is not original_url:
             time.sleep(delay)
 
