@@ -87,7 +87,7 @@ def get_validated_input(question, expected_type="str", default="", options_map=N
             elif clean_answer in ['n', 'no']:
                 return False
             else:
-                print(f"Invalid input. Please enter 'y' or 'n'. You wrote: {answer}")
+                print(f"Invalid input. Please enter 'y' or 'n'. You typed: {answer}")
                 continue
 
         # 2. Handle INTEGER
@@ -103,7 +103,7 @@ def get_validated_input(question, expected_type="str", default="", options_map=N
                     print(f"The number {answer} is not an integer (it has decimals).")
                     continue
             except ValueError:
-                print(f"Invalid integer. Examples: 10, 5e4, 123_456. You wrote: {answer}")
+                print(f"Invalid integer. Examples: 10, 5e4, 123_456. You typed: {answer}")
                 continue
 
         # 3. Handle FLOAT
@@ -112,7 +112,7 @@ def get_validated_input(question, expected_type="str", default="", options_map=N
                 # Python's float() handles scientific notation like 5e-4 automatically
                 return float(clean_num)
             except ValueError:
-                print(f"Invalid number. Examples: 1.5, 5e-4. You wrote: {answer}")
+                print(f"Invalid number. Examples: 1.5, 5e-4. You typed: {answer}")
                 continue
 
         # 4. Handle CHOICES (Mappings)
