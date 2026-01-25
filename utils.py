@@ -172,7 +172,6 @@ def download_gutenberg_books(
         params.append(('langs[]', lang))
     
     file_links = []
-    total_files = len(file_links)
     original_url = url
     prev_url = None
     while len(file_links) < max_books and url is not prev_url:
@@ -200,10 +199,10 @@ def download_gutenberg_books(
                 url = link # this is supposed to be a next page link
                 
         file_links.extend(new_file_links)
-        total_files = len(file_links)
-        print(f"Found {min(total_files, max_books)}/{max_books} files.")
+        print(f"Found {min(len(file_links), max_books)}/{max_books} files.")
 
     file_links = file_links[:max_books]
+    total_files = len(file_links)
 
     # 4. Download Loop with Extraction
     with tqdm(total=total_files, desc="Overall Progress", unit="book") as pbar:
