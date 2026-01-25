@@ -13,9 +13,9 @@
 #   - https://github.com/rasbt/LLMs-from-scratch
 # ------------------------------------------------------------------------
 
-import os
 import time
 import torch
+from pathlib import Path
 
 from model_stats import plot_losses
 from llama_tokenization import Tokenizer
@@ -170,12 +170,14 @@ def train(
     load_checkpoint(model, device, optimizer)
     tokenizer = Tokenizer(tokenizer_file_path) #regular Tokenizer
 
-    # Works for single txts and for a collection of txts
+    data_path = Path(data_path)
     all_files = []
-    for root, dirs, files in os.walk(data_path):
-        for name in files:
-            all_files.append(os.path.join(root, name))
-    
+
+    if data_path.is_file():
+        all_files.append(data_path)
+    elif data_path.is_dir():
+        all_files = [f for f in data_path.iterdir() if f.is_file()]
+
     total_files = len(all_files)
 
     if total_files == 0:

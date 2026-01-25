@@ -300,7 +300,8 @@ Source: "Build a Large Language Model From Scratch"\n\
             seed=FINETUNING_CONFIG["seed"],
             test_context=chat_to_text(
                 [{"role": "system", "content": FINETUNING_CONFIG["system_context"]}, {"role": "user", "content": FINETUNING_CONFIG["test_prompt"]}],
-                prep_for_generation=True
+                prep_for_generation=True,
+                eos=False
             )
         )
 
