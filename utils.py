@@ -201,7 +201,7 @@ def download_gutenberg_books(
                 
         file_links.extend(new_file_links)
         total_files = len(file_links)
-        print(f"Found {max(total_files, max_books)}/{max_books} files.")
+        print(f"Found {min(total_files, max_books)}/{max_books} files.")
 
     file_links = file_links[:max_books]
 
