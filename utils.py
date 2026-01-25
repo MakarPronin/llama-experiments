@@ -171,17 +171,31 @@ def download_gutenberg_books(
     for lang in languages:
         params.append(('langs[]', lang))
     
-    harvest_url = f"{url}?{urlencode(params)}"
-    
-    # 3. Fetch the harvest page
-    print(f"Fetching harvest list from: {harvest_url}")
-    response = requests.get(harvest_url)
-    response.raise_for_status()
+    file_links = []
+    original_url = url
+    while len(file_links) < max_books and url is not original_url:
+        if url is not original_url:
+            time.sleep(delay)
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-    links = [a['href'] for a in soup.find_all('a', href=True)]
-    
-    file_links = [urljoin(harvest_url, l) for l in links if l.endswith(('.zip', '.txt'))]
+        separator = "&" if "?" in url else "?"
+        harvest_url = f"{url}{separator}{urlencode(params)}"
+        
+        # 3. Fetch the harvest page
+        print(f"Fetching harvest list from: {harvest_url}")
+        response = requests.get(harvest_url)
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        links = [a['href'] for a in soup.find_all('a', href=True)]
+
+        new_file_links = []
+        for link in links:
+            if link.endswith(('.zip')):
+                new_file_links.append(link)
+            else:
+                url = link # this is supposed to be a next page link
+        file_links.extend(new_file_links)
+
     file_links = file_links[:max_books] 
 
     total_files = len(file_links)
