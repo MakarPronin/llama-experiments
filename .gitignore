@@ -4,6 +4,7 @@ model.safetensors
 model-00001-of-00002.safetensors
 model-00002-of-00002.safetensors
 /pretraining_data
+/raw_pretraining_data
 instruction-data.json
 chat-data.json
 model_checkpoint.pth

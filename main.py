@@ -203,7 +203,7 @@ Source: "Build a Large Language Model From Scratch"\n\
 
         # Unpack dictionary as arguments
         download_gutenberg_books(
-            directory="pretraining_data/",
+            directory="raw_pretraining_data/",
             delay=GUTENBERG_CONFIG["delay"],
             languages=GUTENBERG_CONFIG["languages"],
             max_books=GUTENBERG_CONFIG["max_books"],
