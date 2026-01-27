@@ -14,6 +14,7 @@
 # ------------------------------------------------------------------------
 
 import os
+import re
 import zlib
 import time
 import json
@@ -155,7 +156,7 @@ def load_checkpoint(model, device, optimizer=None, file_path="model_checkpoint.p
 
 
 def download_gutenberg_books(
-    directory="pretraining_data/",
+    directory="raw_pretraining_data/",
     delay=2, 
     languages=['en'],
     max_books=100,
@@ -239,3 +240,93 @@ def download_gutenberg_books(
             except Exception as e:
                 pbar.write(f"Failed to process {filename}: {e}")
 
+
+def strip_gutenberg_headers(text):
+    """
+    Removes the Project Gutenberg header and footer from a book text.
+    
+    Args:
+        text (str): The raw text of the book.
+        
+    Returns:
+        str: The cleaned text (content only), or the original text if markers aren't found.
+    """
+    
+    # Patterns for the start and end markers. 
+    # Note: We use slightly flexible patterns to catch common variations 
+    # (e.g., "START OF THIS" vs "START OF THE").
+    start_pattern = r"\*\*\* ?START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*"
+    end_pattern =   r"\*\*\* ?END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*"
+    
+    # search() finds the first occurrence of the pattern
+    start_match = re.search(start_pattern, text, re.IGNORECASE)
+    end_match = re.search(end_pattern, text, re.IGNORECASE)
+    
+    # Default indices encompass the whole text if markers aren't found
+    start_index = 0
+    end_index = len(text)
+    
+    # If a start marker is found, move the start index to immediately after it
+    if start_match:
+        start_index = start_match.end()
+        
+    # If an end marker is found, set the end index to the beginning of that marker
+    if end_match:
+        end_index = end_match.start()
+        
+    # If the end marker appears before the start marker (unlikely error state),
+    # just return the original text to avoid returning an empty string or garbage.
+    if end_index < start_index:
+        return text
+        
+    # Slice the text and strip leading/trailing whitespace
+    return text[start_index:end_index].strip()
+
+
+def combine_files(source_dir="raw_pretraining_data/", target_dir="pretraining_data/", max_size_mb=500, strip_headers=True, start_separator="<|begin_of_text|>", end_separator="<|end_of_text|>", fallback_encoding="latin1"):
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    all_files = [os.path.join(path, name) for path, subdirs, files in os.walk(source_dir)
+                 for name in files if name.endswith((".txt", ".txt.utf8"))]
+
+    current_content = []
+    current_size = 0
+    file_counter = 1
+
+    for file_path in tqdm(all_files, desc="Processing books"):
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                content = file.read()
+        except UnicodeDecodeError:
+            # Attempt to read the file with a fallback encoding
+            tqdm.write(f"Warning: UnicodeDecodeError encountered. Trying fallback encoding for {file_path}")
+            with open(file_path, "r", encoding=fallback_encoding) as file:
+                content = file.read()
+
+        if strip_headers:
+            content = strip_gutenberg_headers(content)
+
+        # Regular expression to replace multiple blank lines with a single blank line
+        content = re.sub(r"\n\s*\n", "\n\n", content)
+        estimated_size = len(content.encode("utf-8"))
+
+        if current_size + estimated_size > max_size_mb * 1024 * 1024:
+            add_text_to_file(current_content, target_dir, f"combined_{file_counter}.txt", start_separator, end_separator)
+            file_counter += 1
+            current_content = [content]
+            current_size = estimated_size
+        else:
+            current_content.append(content)
+            current_size += estimated_size
+
+    if current_content:
+        add_text_to_file(current_content, target_dir, f"combined_{file_counter}.txt", start_separator, end_separator)
+    return file_counter
+
+def add_text_to_file(content, target_dir, file_name, start_separator, end_separator):
+        target_file_path = os.path.join(target_dir, file_name)
+        with open(target_file_path, "w", encoding="utf-8") as target_file:
+            # Create a generator that wraps each text and joins them
+            formatted_content = "".join(f"{start_separator}{text}{end_separator}" for text in content)
+            target_file.write(formatted_content)

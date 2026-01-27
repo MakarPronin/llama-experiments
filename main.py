@@ -64,7 +64,7 @@ Source: "Build a Large Language Model From Scratch"\n\
     from llama3_model import LLAMA32_CONFIG, Llama3Model
     from loading_data import convert_instructions_to_chat
     from download_llama_weights import download_weights, load_weights_into_llama
-    from utils import download_file, download_gutenberg_books, save_checkpoint
+    from utils import download_file, download_gutenberg_books, save_checkpoint, combine_files
 
     llama32_config=LLAMA32_CONFIG
 
@@ -92,6 +92,12 @@ Source: "Build a Large Language Model From Scratch"\n\
         "languages": ['en'],
         "max_books": 1000,
         "url": "https://www.gutenberg.org/robot/harvest"
+    }
+
+    PRETRAINING_DATA_PROCESSING_CONFIG = {
+        "max_size_mb": 512,
+        "strip_headers": True,
+        "fallback_encoding": "latin1"
     }
 
     PRETRAINING_CONFIG = {
@@ -166,34 +172,34 @@ Source: "Build a Large Language Model From Scratch"\n\
 
 
 
-    should_download_tokens = get_validated_input("TOKENS: Do you wish to download Llama tokens? (This is unnecessary if you already have a suitable file with tokens.)", "bool", "y")
+    should_download_tokens = get_validated_input("DOWNLOADING TOKENS: Do you wish to download Llama tokens? (This is unnecessary if you already have a suitable file with tokens.)", "bool", "y")
     if should_download_tokens:
-        alt_tokens_source = get_validated_input("TOKENS: Do you want to download Llama tokens from an ungated source (https://huggingface.co/rasbt/llama-3.2-from-scratch)?", "bool", "y")
+        alt_tokens_source = get_validated_input("DOWNLOADING TOKENS: Do you want to download Llama tokens from an ungated source (https://huggingface.co/rasbt/llama-3.2-from-scratch)?", "bool", "y")
 
         download_tokens(llama32_config, alternative=alt_tokens_source)
 
 
 
-    should_download_weights = get_validated_input("WEIGHTS: Do you want to download standard Llama 3.2 weights? They will not work with a custom model configuration.", "bool", "y")
+    should_download_weights = get_validated_input("DOWNLOADING WEIGHTS: Do you want to download standard Llama 3.2 weights? They will not work with a custom model configuration.", "bool", "y")
     if should_download_weights:
-        alt_weights_source = get_validated_input("WEIGHTS: Do you want to download Llama weights from an ungated source (https://huggingface.co/huihui-ai/Llama-3.2-1B-Instruct-abliterated)?", "bool", "y")
+        alt_weights_source = get_validated_input("DOWNLOADING WEIGHTS: Do you want to download Llama weights from an ungated source (https://huggingface.co/huihui-ai/Llama-3.2-1B-Instruct-abliterated)?", "bool", "y")
 
         download_weights(llama32_config, alternative=alt_tokens_source)
 
 
 
-    should_download_gutenberg = get_validated_input("PRETRANING DATA: Would you like to download Gutenberg books? Files will be added to pretraining_data/.", "bool", "n")
+    should_download_gutenberg = get_validated_input("DOWNLOADING PRETRANING DATA: Would you like to download Gutenberg books? Files will be added to raw_pretraining_data/.", "bool", "n")
     if should_download_gutenberg:
 
-        should_change_default_download = get_validated_input("PRETRANING DATA: Do you want to change the default download parameters?", "bool", "n")
+        should_change_default_download = get_validated_input("DOWNLOADING PRETRANING DATA: Do you want to change the default download parameters?", "bool", "n")
         if should_change_default_download:
 
-            lang_input = get_validated_input("PRETRANING DATA: Languages (comma-separated codes, e.g., en,fr)", "str", ",".join(GUTENBERG_CONFIG["languages"]))
+            lang_input = get_validated_input("DOWNLOADING PRETRANING DATA: Languages (comma-separated codes, e.g., en,fr)", "str", ",".join(GUTENBERG_CONFIG["languages"]))
             GUTENBERG_CONFIG["languages"] = [l.strip() for l in lang_input.split(",") if l.strip()]
 
-            GUTENBERG_CONFIG["delay"] = get_validated_input("PRETRANING DATA: Download delay (seconds)", "int", GUTENBERG_CONFIG["delay"])
-            GUTENBERG_CONFIG["max_books"] = get_validated_input("PRETRANING DATA: Max number of books", "int", GUTENBERG_CONFIG["max_books"])
-            GUTENBERG_CONFIG["url"] = get_validated_input("PRETRANING DATA: Where do you want to download the books from?", "str", "https://www.gutenberg.org/robot/harvest")
+            GUTENBERG_CONFIG["delay"] = get_validated_input("DOWNLOADING PRETRANING DATA: Download delay (seconds)", "int", GUTENBERG_CONFIG["delay"])
+            GUTENBERG_CONFIG["max_books"] = get_validated_input("DOWNLOADING PRETRANING DATA: Max number of books", "int", GUTENBERG_CONFIG["max_books"])
+            GUTENBERG_CONFIG["url"] = get_validated_input("DOWNLOADING PRETRANING DATA: Where do you want to download the books from?", "str", "https://www.gutenberg.org/robot/harvest")
 
         # Unpack dictionary as arguments
         download_gutenberg_books(
@@ -206,12 +212,31 @@ Source: "Build a Large Language Model From Scratch"\n\
 
 
 
-    should_download_instructions = get_validated_input("FINETUNING DATA: Do you wish to download chatbot instructions from https://github.com/rasbt/LLMs-from-scratch/blob/main/ch07/01_main-chapter-code/instruction-data.json (instructions can be used for fine-tuning)?", "bool", "n")
+    should_download_instructions = get_validated_input("DOWNLOADING FINETUNING DATA: Do you wish to download chatbot instructions from https://github.com/rasbt/LLMs-from-scratch/blob/main/ch07/01_main-chapter-code/instruction-data.json (instructions can be used for fine-tuning)?", "bool", "n")
     if should_download_instructions:
         download_file("instruction-data.json", "https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/refs/heads/main/ch07/01_main-chapter-code/instruction-data.json")
 
 
-    should_convert_instructions = get_validated_input("FINETUNING DATA: Do you want to convert instruction-data.json to chat format (chat-data.json)? This is necessary for fine-tuning.", "bool", "n")
+
+    should_combine_pretraining_data = get_validated_input("PROCESSING PRETRANING DATA: Would you want to combine files in raw_pretraining_data into larger ones and put them into pretraining_data/? By default this will also strip unnecessary headers.", "bool", "n")
+    if should_combine_pretraining_data:
+        change_default_pretraining_data_processing = get_validated_input("PROCESSING PRETRANING DATA: Do you want to change the default pretraining data processing settings?", "bool", "n")
+        if change_default_pretraining_data_processing:
+            PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"] = get_validated_input("PROCESSING PRETRANING DATA: Max size in MB?", "int", PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"])
+            PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"] = get_validated_input("PROCESSING PRETRANING DATA: Strip Gutenberg headers? (This will do nothing if files don't contain Gutenberg headers)", "bool", PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"])
+            PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"] = get_validated_input("PROCESSING PRETRANING DATA: Fallback encoding?", "str", PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"])
+            
+        combine_files(
+            "raw_pretraining_data/",
+            "pretraining_data/",
+            strip_headers=PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"],
+            fallback_encoding=PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"],
+            max_size_mb=PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"]
+        )
+
+
+
+    should_convert_instructions = get_validated_input("PROCESSING FINETUNING DATA: Do you want to convert instruction-data.json to chat format (chat-data.json)? This is necessary for fine-tuning.", "bool", "n")
     if should_convert_instructions:
 
         print("Converting the instruction-data.json to chat format...")
