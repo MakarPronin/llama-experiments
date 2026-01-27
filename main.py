@@ -223,7 +223,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         change_default_pretraining_data_processing = get_validated_input("PROCESSING PRETRANING DATA: Do you want to change the default pretraining data processing settings?", "bool", "n")
         if change_default_pretraining_data_processing:
             PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"] = get_validated_input("PROCESSING PRETRANING DATA: Max size in MB?", "int", PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"])
-            PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"] = get_validated_input("PROCESSING PRETRANING DATA: Strip Gutenberg headers? (This will do nothing if files don't contain Gutenberg headers)", "bool", PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"])
+            PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"] = get_validated_input("PROCESSING PRETRANING DATA: Strip Gutenberg headers? (This will do nothing if files don't contain Gutenberg headers)", "bool", "y" if PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"] else "n")
             PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"] = get_validated_input("PROCESSING PRETRANING DATA: Fallback encoding?", "str", PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"])
             
         combine_files(
