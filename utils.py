@@ -222,11 +222,23 @@ def download_gutenberg_books(
                         # (in case the corruption was due to a bad download)
                         with zipfile.ZipFile(local_path, 'r') as zip_ref:
                             zip_ref.extractall(directory)
+                        
+                        # SUCCESS CLEANUP: Only remove the file if it was a zip we extracted
+                        if os.path.exists(local_path):
+                            os.remove(local_path)
                     
-                    # If we reach this line, everything succeeded
+                    # If we reach this line, everything succeeded.
+                    # We keep .txt files, but removed .zips above.
                     break 
 
                 except Exception as e:
+                    # FAILURE CLEANUP: Remove partial/corrupt files before retrying
+                    if os.path.exists(local_path):
+                        try:
+                            os.remove(local_path)
+                        except OSError:
+                            pbar.write(f"Could not complete a cleanup of {filename} after a failed attempt.")
+                    
                     # Log the failure
                     if attempt < max_retries - 1:
                         pbar.write(f"Attempt {attempt + 1} failed for {filename}: {e}. Retrying...")
@@ -234,12 +246,6 @@ def download_gutenberg_books(
                     else:
                         # Final failure after max retries
                         pbar.write(f"Failed to process {filename} after {max_retries} attempts: {e}")
-
-                if os.path.exists(local_path):
-                    try:
-                        os.remove(local_path)
-                    except OSError:
-                        pbar.write(f"Could not complete a cleanup of {local_path} after download.")
 
             # Update master progress bar (once per file, not per attempt)
             pbar.update(1)
