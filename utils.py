@@ -157,17 +157,18 @@ def load_checkpoint(model, device, optimizer=None, file_path="model_checkpoint.p
 
 def download_gutenberg_books(
     directory="raw_pretraining_data/",
-    delay=2, 
+    delay=2,
+    max_retries=3,
     languages=['en'],
     max_books=100,
     url="https://www.gutenberg.org/robot/harvest"
 ):
-    # 1. Setup Directory
+    # Setup Directory
     if not os.path.exists(directory):
         os.makedirs(directory)
         print(f"Created directory: {directory}")
     
-    # 2. Construct query parameters
+    # Construct query parameters
     params = [('filetypes[]', 'txt')]
     for lang in languages:
         params.append(('langs[]', lang))
@@ -183,7 +184,7 @@ def download_gutenberg_books(
             separator = "&" if "?" in url else "?"
             harvest_url = f"{url}{separator}{urlencode(params)}"
         
-        # 3. Fetch the harvest page
+        # Fetch the harvest pages
         print(f"Fetching harvest list from: {harvest_url}")
         response = requests.get(harvest_url)
         response.raise_for_status()
@@ -194,7 +195,7 @@ def download_gutenberg_books(
         new_file_links = []
         prev_url = url
         for link in links:
-            if link.endswith(('.zip')):
+            if link.endswith(('.zip', '.txt')):
                 new_file_links.append(link)
             else:
                 url = link # this is supposed to be a next page link
@@ -205,40 +206,46 @@ def download_gutenberg_books(
     file_links = file_links[:max_books]
     total_files = len(file_links)
 
-    # 4. Download Loop with Extraction
+    # Download Loop with Extraction    
     with tqdm(total=total_files, desc="Overall Progress", unit="book") as pbar:
         for i, file_url in enumerate(file_links):
             filename = file_url.split('/')[-1]
             local_path = os.path.join(directory, filename)
             
-            try:
-                # A. Download the file
-                download_file(local_path, file_url, show_progress=False, verbose=False, verify=False)
-                
-                # B. Extract if it is a zip file
-                if filename.endswith('.zip'):
-                    try:
-                        with zipfile.ZipFile(local_path, 'r') as zip_ref:
-                            # Extract all files to the same directory
-                            zip_ref.extractall(directory)
-                            
-                            # Optional: Log what was extracted (for debugging)
-                            # extracted_files = zip_ref.namelist()
-                        
-                        # C. Cleanup: Remove the .zip file to save space
-                        os.remove(local_path)
-                        
-                    except zipfile.BadZipFile:
-                        pbar.write(f"Warning: {filename} was corrupted and could not be unzipped.")
-
-                # Update the master progress bar
-                pbar.update(1)
-                
-                if i < total_files - 1:
-                    time.sleep(delay)
+            # Retry Logic: Attempt up to 3 times
+            for attempt in range(max_retries):
+                try:
+                    download_file(local_path, file_url, show_progress=False, verbose=False, verify=False)
                     
-            except Exception as e:
-                pbar.write(f"Failed to process {filename}: {e}")
+                    if filename.endswith('.zip'):
+                        # Note: We treat BadZipFile as a failure here so it triggers a retry 
+                        # (in case the corruption was due to a bad download)
+                        with zipfile.ZipFile(local_path, 'r') as zip_ref:
+                            zip_ref.extractall(directory)
+                    
+                    # If we reach this line, everything succeeded
+                    break 
+
+                except Exception as e:
+                    # Log the failure
+                    if attempt < max_retries - 1:
+                        pbar.write(f"Attempt {attempt + 1} failed for {filename}: {e}. Retrying...")
+                        time.sleep(delay)
+                    else:
+                        # Final failure after max retries
+                        pbar.write(f"Failed to process {filename} after {max_retries} attempts: {e}")
+
+                if os.path.exists(local_path):
+                    try:
+                        os.remove(local_path)
+                    except OSError:
+                        pbar.write(f"Could not complete a cleanup of {local_path} after download.")
+
+            # Update master progress bar (once per file, not per attempt)
+            pbar.update(1)
+            
+            if i < total_files - 1:
+                time.sleep(delay)
 
 
 def strip_gutenberg_headers(text):

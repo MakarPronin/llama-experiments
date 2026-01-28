@@ -89,6 +89,7 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     GUTENBERG_CONFIG = {
         "delay": 2,
+        "max_retries": 3,
         "languages": ['en'],
         "max_books": 1000,
         "url": "https://www.gutenberg.org/robot/harvest"
@@ -198,6 +199,7 @@ Source: "Build a Large Language Model From Scratch"\n\
             GUTENBERG_CONFIG["languages"] = [l.strip() for l in lang_input.split(",") if l.strip()]
 
             GUTENBERG_CONFIG["delay"] = get_validated_input("DOWNLOADING PRETRANING DATA: Download delay (seconds)", "int", GUTENBERG_CONFIG["delay"])
+            GUTENBERG_CONFIG["max_retries"] = get_validated_input("DOWNLOADING PRETRANING DATA: Max number of retries", "int", GUTENBERG_CONFIG["max_retries"])
             GUTENBERG_CONFIG["max_books"] = get_validated_input("DOWNLOADING PRETRANING DATA: Max number of books", "int", GUTENBERG_CONFIG["max_books"])
             GUTENBERG_CONFIG["url"] = get_validated_input("DOWNLOADING PRETRANING DATA: Where do you want to download the books from?", "str", "https://www.gutenberg.org/robot/harvest")
 
@@ -205,6 +207,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         download_gutenberg_books(
             directory="raw_pretraining_data/",
             delay=GUTENBERG_CONFIG["delay"],
+            max_retries=GUTENBERG_CONFIG["max_retries"],
             languages=GUTENBERG_CONFIG["languages"],
             max_books=GUTENBERG_CONFIG["max_books"],
             url=GUTENBERG_CONFIG["url"]
