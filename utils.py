@@ -257,42 +257,24 @@ def download_gutenberg_books(
 def strip_gutenberg_headers(text):
     """
     Removes the Project Gutenberg header and footer from a book text.
-    
-    Args:
-        text (str): The raw text of the book.
-        
-    Returns:
-        str: The cleaned text (content only), or the original text if markers aren't found.
     """
-    
-    # Patterns for the start and end markers. 
-    # Note: We use slightly flexible patterns to catch common variations 
-    # (e.g., "START OF THIS" vs "START OF THE").
-    start_pattern = r"\*\*\* ?START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*"
-    end_pattern =   r"\*\*\* ?END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*"
-    
-    # search() finds the first occurrence of the pattern
-    start_match = re.search(start_pattern, text, re.IGNORECASE)
-    end_match = re.search(end_pattern, text, re.IGNORECASE)
-    
-    # Default indices encompass the whole text if markers aren't found
-    start_index = 0
-    end_index = len(text)
-    
-    # If a start marker is found, move the start index to immediately after it
-    if start_match:
-        start_index = start_match.end()
-        
-    # If an end marker is found, set the end index to the beginning of that marker
-    if end_match:
-        end_index = end_match.start()
-        
-    # If the end marker appears before the start marker (unlikely error state),
-    # just return the original text to avoid returning an empty string or garbage.
+
+    start_pattern = (
+        r"\*\*\*\s*START OF.*?PROJECT GUTENBERG EBOOK"
+    )
+    end_pattern = (
+        r"\*\*\*\s*END OF.*?PROJECT GUTENBERG EBOOK"
+    )
+
+    start_match = re.search(start_pattern, text, re.IGNORECASE | re.DOTALL)
+    end_match = re.search(end_pattern, text, re.IGNORECASE | re.DOTALL)
+
+    start_index = start_match.end() if start_match else 0
+    end_index = end_match.start() if end_match else len(text)
+
     if end_index < start_index:
         return text
-        
-    # Slice the text and strip leading/trailing whitespace
+
     return text[start_index:end_index].strip()
 
 
