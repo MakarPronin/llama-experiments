@@ -135,8 +135,8 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                         print("Generated sample: ", output_text.replace("\n", " "))  # Compact print format
                         model.train()
 
-                if global_step % save_ckpt_freq == 0:
-                    save_checkpoint(model, optimizer, checkpoint_file_path)
+                    if global_step % save_ckpt_freq == 0:
+                        save_checkpoint(model, optimizer, checkpoint_file_path)
 
                 print_eta(start_time, book_start_time, index, total_files)
 
