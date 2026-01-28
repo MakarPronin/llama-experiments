@@ -256,21 +256,33 @@ def download_gutenberg_books(
 
 def strip_gutenberg_headers(text):
     """
-    Removes the Project Gutenberg header and footer from a book text.
+    Removes Project Gutenberg headers and footers (modern + legacy).
     """
 
-    start_pattern = (
-        r"\*\*\*\s*START OF.*?PROJECT GUTENBERG EBOOK"
-    )
-    end_pattern = (
-        r"\*\*\*\s*END OF.*?PROJECT GUTENBERG EBOOK"
-    )
+    start_patterns = [
+        r"\*\*\*\s*START OF.*?PROJECT GUTENBERG EBOOK",
+        r"\*{3}\s*START\*{2}THE SMALL PRINT!\*{2}FOR PUBLIC DOMAIN ETEXTS\*{2}START\*{3}",
+    ]
 
-    start_match = re.search(start_pattern, text, re.IGNORECASE | re.DOTALL)
-    end_match = re.search(end_pattern, text, re.IGNORECASE | re.DOTALL)
+    end_patterns = [
+        r"\*\*\*\s*END OF.*?PROJECT GUTENBERG EBOOK",
+        r"\*END\*THE SMALL PRINT!.*?END\*",
+    ]
 
-    start_index = start_match.end() if start_match else 0
-    end_index = end_match.start() if end_match else len(text)
+    start_index = 0
+    end_index = len(text)
+
+    for pattern in start_patterns:
+        match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+        if match:
+            start_index = match.end()
+            break
+
+    for pattern in end_patterns:
+        match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+        if match:
+            end_index = match.start()
+            break
 
     if end_index < start_index:
         return text
