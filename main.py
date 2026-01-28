@@ -95,7 +95,7 @@ Source: "Build a Large Language Model From Scratch"\n\
     }
 
     PRETRAINING_DATA_PROCESSING_CONFIG = {
-        "max_size_mb": 512,
+        "max_size_mb": 16,
         "strip_headers": True,
         "fallback_encoding": "latin1"
     }

@@ -300,7 +300,6 @@ def combine_files(source_dir="raw_pretraining_data/", target_dir="pretraining_da
                 content = file.read()
         except UnicodeDecodeError:
             # Attempt to read the file with a fallback encoding
-            tqdm.write(f"Warning: UnicodeDecodeError encountered. Trying fallback encoding for {file_path}")
             with open(file_path, "r", encoding=fallback_encoding) as file:
                 content = file.read()
 
