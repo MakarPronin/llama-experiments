@@ -107,7 +107,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "eval_freq": 100,
         "save_ckpt_freq": 100,
         "learning_rate": 0.00005,
-        "batch_size": 6,
+        "batch_size": 5,
         "test_context": "What do llamas eat?",
         "llama32_config": llama32_config,
         "seed": 123
@@ -119,7 +119,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "eval_freq": 100,
         "save_ckpt_freq": 100,
         "learning_rate": 0.00001,
-        "batch_size": 6,
+        "batch_size": 5,
         "system_context": "You are a helpful assistant.",
         "test_prompt": "What do llamas eat?",
         "llama32_config": llama32_config,
