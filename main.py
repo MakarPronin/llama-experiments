@@ -96,18 +96,18 @@ Source: "Build a Large Language Model From Scratch"\n\
     }
 
     PRETRAINING_DATA_PROCESSING_CONFIG = {
-        "max_size_mb": 16,
+        "max_size_mb": 32,
         "strip_headers": True,
         "fallback_encoding": "latin1"
     }
 
     PRETRAINING_CONFIG = {
         "n_epochs": 1,
-        "print_sample_iter": 50,
-        "eval_freq": 5,
-        "save_ckpt_freq": 50,
-        "learning_rate": 0.0005,
-        "batch_size": 5,
+        "print_sample_iter": 100,
+        "eval_freq": 100,
+        "save_ckpt_freq": 100,
+        "learning_rate": 0.00005,
+        "batch_size": 6,
         "test_context": "What do llamas eat?",
         "llama32_config": llama32_config,
         "seed": 123
@@ -115,11 +115,11 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     FINETUNING_CONFIG = {
         "n_epochs": 1,
-        "print_sample_iter": 50,
-        "eval_freq": 5,
-        "save_ckpt_freq": 50,
-        "learning_rate": 0.0005,
-        "batch_size": 5,
+        "print_sample_iter": 100,
+        "eval_freq": 100,
+        "save_ckpt_freq": 100,
+        "learning_rate": 0.00001,
+        "batch_size": 6,
         "system_context": "You are a helpful assistant.",
         "test_prompt": "What do llamas eat?",
         "llama32_config": llama32_config,
