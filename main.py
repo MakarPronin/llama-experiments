@@ -109,7 +109,6 @@ Source: "Build a Large Language Model From Scratch"\n\
         "learning_rate": 0.00005,
         "batch_size": 5,
         "test_context": "What do llamas eat?",
-        "llama32_config": llama32_config,
         "seed": 123
     }
 
@@ -122,7 +121,6 @@ Source: "Build a Large Language Model From Scratch"\n\
         "batch_size": 5,
         "system_context": "You are a helpful assistant.",
         "test_prompt": "What do llamas eat?",
-        "llama32_config": llama32_config,
         "seed": 123
     }
 
