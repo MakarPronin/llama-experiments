@@ -344,7 +344,7 @@ def train(
         )
 
     if (checkpoint_type != 'training'):
-        print(f"The loaded checkpoint is model_only. Training will be started from epoch 0, file 0, step 0.")
+        print(f"Training will be started from epoch 1, file 1, step 1.")
         start_epoch = 0
         start_file_index = 0
         start_global_step = 0
