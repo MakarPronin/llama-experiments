@@ -174,9 +174,12 @@ def get_best_supported_version(version, supported_versions):
         
     return 0.0
 
+def get_os():
+    return platform.system()
+
 def install_best_pytorch():
     print("Installing the best available option of PyTorch...")
-    os_system = platform.system()
+    os_system = get_os()
     pkgs = ["torch", "torchvision"]
     cmd = [sys.executable, "-m", "pip", "install", *pkgs]
 

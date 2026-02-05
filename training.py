@@ -124,17 +124,17 @@ def calc_loss_loader(data_loader, model, device, num_batches=None):
     return total_loss / num_batches_processed
 
 
-def evaluate_model(model, train_loader, val_loader, device, eval_iter):
+def evaluate_model(model, val_loader, device, eval_iter):
     model.eval()
     with torch.no_grad():
-        file_train_loss = calc_loss_loader(train_loader, model, device, num_batches=eval_iter)
+        # We only calculate validation loss here to save memory/time
         val_loss = calc_loss_loader(val_loader, model, device, num_batches=eval_iter)
     model.train()
-    return file_train_loss, val_loss
+    return val_loss
 
-
-def training_step(model, device, llama32_config, tokenizer, train_loader, val_loader, scaler, optimizer, scheduler, eval_freq,
-    eval_iter, test_context, file_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter):
+# This is a very ugly function.
+def training_step(model, device, llama32_config, tokenizer, val_loader, scaler, optimizer, scheduler, eval_freq,
+    eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, batch_loss):
 
 # 1. Unscale before clipping
     if scaler:
@@ -159,11 +159,14 @@ def training_step(model, device, llama32_config, tokenizer, train_loader, val_lo
 
     # --- EVALUATION ---
     if global_step % eval_freq == 0:
-        tl, vl = evaluate_model(model, train_loader, val_loader, device, eval_iter)
-        file_train_losses.append(tl)
+        # Pass ONLY val_loader. Use current_batch_loss for training metric.
+        vl = evaluate_model(model, val_loader, device, eval_iter)
+        
+        # Append the actual loss we just trained on (much cheaper)
+        batch_train_losses.append(batch_loss) 
         val_losses.append(vl)
         track_tokens_seen.append(tokens_seen)
-        print(f"Ep {epoch+1} (Step {global_step}): Train {tl:.3f}, Val {vl:.3f}")
+        print(f"Ep {epoch+1} (Step {global_step}): Train (Batch) {batch_loss:.3f}, Val {vl:.3f}")
 
     # --- GENERATION ---
     if global_step % print_sample_iter == 0:
@@ -184,7 +187,7 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                        start_epoch=0, start_file_index=0, 
                        start_global_step=0, start_tokens_seen=0):
 
-    file_train_losses, val_losses, track_tokens_seen = [], [], []
+    batch_train_losses, val_losses, track_tokens_seen = [], [], []
     
     # Initialize state from arguments
     tokens_seen = start_tokens_seen
@@ -237,15 +240,15 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                 accum_track += 1
 
                 if accum_track % accumulation_steps == 0:
-                    global_step = training_step(model, device, llama32_config, tokenizer, train_loader, val_loader, scaler, optimizer, scheduler, eval_freq,
-                        eval_iter, test_context, file_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter)
+                    global_step = training_step(model, device, llama32_config, tokenizer, val_loader, scaler, optimizer, scheduler, eval_freq,
+                        eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss.item())
 
                 tokens_seen += input_batch.numel()
 
             # End of Book Step. Removes accumulated gradients.
             if accum_track % accumulation_steps != 0:
-                global_step = training_step(model, device, llama32_config, tokenizer, train_loader, val_loader, scaler, optimizer, scheduler, eval_freq,
-                    eval_iter, test_context, file_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter)
+                global_step = training_step(model, device, llama32_config, tokenizer, val_loader, scaler, optimizer, scheduler, eval_freq,
+                    eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss.item())
                 
             print_eta(start_time, book_start_time, index, total_files)
 
@@ -257,7 +260,7 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                 last_checkpoint_step = global_step
                 save_checkpoint(model, optimizer, scheduler, epoch, index+1, global_step, tokens_seen, checkpoint_file_path)
 
-    return file_train_losses, val_losses, track_tokens_seen
+    return batch_train_losses, val_losses, track_tokens_seen
 
 
 def train(
@@ -356,7 +359,7 @@ def train(
             print(f"Compile failed or skipped: {e}")
 
     # --- START TRAINING ---
-    file_train_losses, val_losses, tokens_seen = train_model_simple(
+    batch_train_losses, val_losses, tokens_seen = train_model_simple(
         model=model, 
         llama32_config=llama32_config, 
         optimizer=optimizer, 
@@ -385,7 +388,7 @@ def train(
     )
 
     # Plotting
-    epochs_tensor = torch.linspace(0, n_epochs, len(file_train_losses))
-    plot_losses(epochs_tensor, tokens_seen, file_train_losses, val_losses)
+    epochs_tensor = torch.linspace(0, n_epochs, len(batch_train_losses))
+    plot_losses(epochs_tensor, tokens_seen, batch_train_losses, val_losses)
     
     print(f"Maximum GPU memory allocated: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
