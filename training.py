@@ -335,14 +335,15 @@ def train(
         scheduler = CosineAnnealingLR(optimizer, T_max=total_training_steps)
 
     # --- LOAD STATE (If Exists) ---
+    checkpoint_type = ''
     if not os.path.exists(checkpoint_file_path):
         print(f"No checkpoint found at {checkpoint_file_path}. Starting from scratch.")
-    
-    checkpoint_type, start_epoch, start_file_index, start_global_step, start_tokens = load_checkpoint(
-        model, device, optimizer, scheduler, checkpoint_file_path
-    )
+    else:    
+        checkpoint_type, start_epoch, start_file_index, start_global_step, start_tokens = load_checkpoint(
+            model, device, optimizer, scheduler, checkpoint_file_path
+        )
 
-    if (checkpoint_type == 'model_only'):
+    if (checkpoint_type != 'training'):
         print(f"The loaded checkpoint is model_only. Training will be started from epoch 0, file 0, step 0.")
         start_epoch = 0
         start_file_index = 0
