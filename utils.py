@@ -150,6 +150,7 @@ def save_checkpoint(model, optimizer=None, scheduler=None, epoch=None, file_inde
     print(f"Checkpoint saved!")
 
 def load_checkpoint(model, device, optimizer=None, scheduler=None, file_path="model_checkpoint.pth"):
+    checkpoint_type = "inference"
     start_epoch = 0
     start_file_index = 0
     global_step = 0
