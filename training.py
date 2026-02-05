@@ -16,10 +16,8 @@
 import os
 import time
 from pathlib import Path
-from contextlib import nullcontext
 
 import torch
-from torch.amp import autocast, GradScaler
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from model_stats import plot_losses
@@ -27,7 +25,7 @@ from llama_tokenization import Tokenizer
 from generation import generate_text_simple
 from llama3_model import Llama3Model, LLAMA32_CONFIG
 from loading_data import get_loaders_finetuning, get_loaders_pretraining
-from utils import get_device, read_text_file, read_json_file, print_eta, load_checkpoint, save_checkpoint, get_autocast_config
+from utils import get_device, read_text_file, read_json_file, print_eta, load_checkpoint, save_checkpoint
 
 
 def get_loader(file_path, tokenizer, llama32_config, device, batch_size, num_workers):
@@ -133,22 +131,14 @@ def evaluate_model(model, val_loader, device, eval_iter):
     return val_loss
 
 # This is a very ugly function.
-def training_step(model, device, llama32_config, tokenizer, val_loader, scaler, optimizer, scheduler, eval_freq,
+def training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
     eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, batch_loss):
 
-# 1. Unscale before clipping
-    if scaler:
-        scaler.unscale_(optimizer)
-    
     # 2. Gradient Clipping (Crucial for Llama stability)
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
     # 3. Step
-    if scaler:
-        scaler.step(optimizer)
-        scaler.update()
-    else:
-        optimizer.step()
+    optimizer.step()
     
     # 4. Scheduler Step
     if scheduler:
@@ -183,7 +173,7 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
                        eval_freq, eval_iter, ckpt_freq_after_file, print_sample_iter,
                        test_context, tokenizer, all_files, total_files,
                        checkpoint_file_path, batch_size, val_loader,
-                       accumulation_steps, scheduler, num_workers, use_autocast,
+                       accumulation_steps, scheduler, num_workers,
                        start_epoch=0, start_file_index=0, 
                        start_global_step=0, start_tokens_seen=0):
 
@@ -195,9 +185,6 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
     last_checkpoint_step = start_global_step
     
     start_time = time.time()
-    amp_device, amp_dtype = get_autocast_config(device)
-    use_scaler = use_autocast and (amp_dtype == torch.float16) and (device.type == 'cuda')
-    scaler = GradScaler() if use_scaler else None 
 
     print(f"Training. Epoch: {start_epoch+1}, File Index: {start_file_index}")
 
@@ -225,29 +212,22 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
             accum_track = 0
             
             for input_batch, target_batch in train_loader:
-                # Setup Autocast
-                ctx = autocast(device_type=amp_device, dtype=amp_dtype) if use_autocast else nullcontext()
+                loss = calc_loss_batch(input_batch, target_batch, model, device)
+                loss = loss / accumulation_steps
 
-                with ctx:
-                    loss = calc_loss_batch(input_batch, target_batch, model, device)
-                    loss = loss / accumulation_steps
-
-                if scaler:
-                    scaler.scale(loss).backward()
-                else:
-                    loss.backward()
+                loss.backward()
 
                 accum_track += 1
 
                 if accum_track % accumulation_steps == 0:
-                    global_step = training_step(model, device, llama32_config, tokenizer, val_loader, scaler, optimizer, scheduler, eval_freq,
+                    global_step = training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
                         eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss.item())
 
                 tokens_seen += input_batch.numel()
 
             # End of Book Step. Removes accumulated gradients.
             if accum_track % accumulation_steps != 0:
-                global_step = training_step(model, device, llama32_config, tokenizer, val_loader, scaler, optimizer, scheduler, eval_freq,
+                global_step = training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
                     eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss.item())
                 
             print_eta(start_time, book_start_time, index, total_files)
@@ -274,8 +254,6 @@ def train(
         batch_size=5,
         accumulation_steps=8,
         num_workers=2,
-        use_autocast=True,
-        use_compile=True,
         use_scheduler=True,
         test_context="The meaning of life is",
         llama32_config=LLAMA32_CONFIG,
@@ -351,13 +329,6 @@ def train(
         start_global_step = 0
         start_tokens = 0
     
-    if use_compile:
-        try:
-            print("Compiling model (this may take a minute)...")
-            model = torch.compile(model)
-        except Exception as e:
-            print(f"Compile failed or skipped: {e}")
-
     # --- START TRAINING ---
     batch_train_losses, val_losses, tokens_seen = train_model_simple(
         model=model, 
@@ -379,7 +350,6 @@ def train(
         scheduler=scheduler,
         val_loader=val_loader,
         num_workers=num_workers,
-        use_autocast=use_autocast,
         # RESUME ARGS
         start_epoch=start_epoch,
         start_file_index=start_file_index,

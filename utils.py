@@ -413,28 +413,3 @@ def add_buffer_to_file(content_list, target_dir, filename, start_sep, end_sep):
         for text in content_list:
             if text.strip():
                 f.write(f"{start_sep}\n{text}\n{end_sep}\n")
-
-
-def get_autocast_config(device):
-    """
-    Probes the hardware to find the best data type.
-    Returns the dtype (bfloat16 or float16) and device string.
-    """
-    # 1. Handle CPU (Standard is bfloat16 for CPU AMP)
-    if device.type == 'cpu':
-        return 'cpu', torch.bfloat16
-        
-    # 2. Default to float16 (Best for Turing/Pascal/Volta - e.g., GTX 10xx, 16xx, RTX 20xx)
-    dtype = torch.float16
-    
-    # 3. Check for NATIVE bfloat16 support on CUDA
-    if device.type == 'cuda':
-        # Get the compute capability (returns tuple like (7, 5))
-        major, _ = torch.cuda.get_device_capability(device)
-        
-        # Only use bfloat16 if architecture is Ampere (8.0) or newer (e.g., RTX 30xx, 40xx, A100)
-        # We explicitly check 'major >= 8' to avoid false positives on Turing (7.5).
-        if major >= 8 and torch.cuda.is_bf16_supported():
-            dtype = torch.bfloat16
-
-    return device.type, dtype

@@ -78,7 +78,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "hidden_dim": 4096,              # Size of the intermediate dimension in FeedForward
         "n_kv_groups": 4,                # Key-Value groups for grouped-query attention
         "rope_base": 500000,             # The base in RoPE's "theta"
-        "dtype": torch.float32,          # Lower-precision dtype to reduce memory usage. Not all GPUs natively support bfloat16
+        "dtype": torch.bfloat16,         # Lower-precision dtype to reduce memory usage. Not all GPUs natively support bfloat16
         "rope_freq": {                   # RoPE frequency scaling
             "factor": 1,
             "low_freq_factor": 1,
@@ -108,11 +108,9 @@ Source: "Build a Large Language Model From Scratch"\n\
         "eval_freq": 2,
         "ckpt_freq_after_file": 2,
         "learning_rate": 0.0005,
-        "batch_size": 5,
+        "batch_size": 2,
         "accumulation_steps": 8,
-        "num_workers": 2,
-        "use_autocast": True,
-        "use_compile": False,
+        "num_workers": 0,
         "use_scheduler": True,
         "test_context": "The meaning of life is",
         "seed": 123
@@ -124,11 +122,9 @@ Source: "Build a Large Language Model From Scratch"\n\
         "eval_freq": 2,
         "ckpt_freq_after_file": 2,
         "learning_rate": 0.0005,
-        "batch_size": 5,
+        "batch_size": 2,
         "accumulation_steps": 8,
-        "num_workers": 2,
-        "use_autocast": True,
-        "use_compile": False,
+        "num_workers": 0,
         "use_scheduler": True,
         "system_context": "You are a helpful assistant.",
         "test_prompt": "The meaning of life is",
@@ -141,21 +137,8 @@ Source: "Build a Large Language Model From Scratch"\n\
         "top_k": 1,
         "temperature": 0,
         "use_chat_format": True,
-        "use_compile": False,
         "seed": 123
     }
-
-    cl_path = "You can change this in main.py editable configs to avoid typing manually"
-    #END OF EDITABLE CONFIGS
-
-    def check_use_compile(config):
-        if config["use_compile"] and not "CC" in os.environ:
-            ex_path = r'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC\14.xx.xxxxx\bin\Hostx64\x64\cl.exe'
-            os.environ["CC"] = get_validated_input(f'DEPENDENCIES: You have use_compile set to True.\ntorch.compile() requires to install triton ("pip install triton" for Linux or "pip install triton-windows" for Windows) and Visual Studio Build Tools (https://visualstudio.microsoft.com/visual-cpp-build-tools/)\nAfter installing everything, enter here path to cl.exe (Ex: {ex_path})', "str", cl_path)
-
-    check_use_compile(PRETRAINING_CONFIG)
-    check_use_compile(FINETUNING_CONFIG)
-    check_use_compile(CHAT_CONFIG)
 
     change_config = get_validated_input('MODEL CONFIG: Do you wish to change the default configuration (1B Llama 3.2)? If you change, make sure all downloaded and generated model files are valid. Maybe delete the existing files to provide a clean foundation for the updated model version.', "bool", "n")
     if (change_config):
@@ -309,11 +292,7 @@ Source: "Build a Large Language Model From Scratch"\n\
             PRETRAINING_CONFIG["test_context"] = get_validated_input("PRETRAINING: prompt for samples", "str", PRETRAINING_CONFIG["test_context"])
             PRETRAINING_CONFIG["accumulation_steps"] = get_validated_input("PRETRAINING: gradient accumulation steps", "int", PRETRAINING_CONFIG["accumulation_steps"])
             PRETRAINING_CONFIG["num_workers"] = get_validated_input("PRETRAINING: number of workers for data loading", "int", PRETRAINING_CONFIG["num_workers"])
-            PRETRAINING_CONFIG["use_autocast"] = get_validated_input("PRETRAINING: use autocast (mixed precision)?", "bool", "y" if PRETRAINING_CONFIG["use_autocast"] else "n")
-            PRETRAINING_CONFIG["use_compile"] = get_validated_input("PRETRAINING: use torch.compile for model compilation?", "bool", "y" if PRETRAINING_CONFIG["use_compile"] else "n")
             PRETRAINING_CONFIG["use_scheduler"] = get_validated_input("PRETRAINING: use learning rate scheduler?", "bool", "y" if PRETRAINING_CONFIG["use_scheduler"] else "n")
-
-            check_use_compile(PRETRAINING_CONFIG)
 
         train(
             data_path="pretraining_data/",
@@ -327,8 +306,6 @@ Source: "Build a Large Language Model From Scratch"\n\
             llama32_config=llama32_config,
             accumulation_steps=PRETRAINING_CONFIG["accumulation_steps"],
             num_workers=PRETRAINING_CONFIG["num_workers"],
-            use_autocast=PRETRAINING_CONFIG["use_autocast"],
-            use_compile=PRETRAINING_CONFIG["use_compile"],
             use_scheduler=PRETRAINING_CONFIG["use_scheduler"],
         )
 
@@ -349,11 +326,7 @@ Source: "Build a Large Language Model From Scratch"\n\
             FINETUNING_CONFIG["system_context"] = get_validated_input("FINE-TUNING: default system message", "str", FINETUNING_CONFIG["system_context"])
             FINETUNING_CONFIG["accumulation_steps"] = get_validated_input("FINE-TUNING: gradient accumulation steps", "int", FINETUNING_CONFIG["accumulation_steps"])
             FINETUNING_CONFIG["num_workers"] = get_validated_input("FINE-TUNING: number of workers for data loading", "int", FINETUNING_CONFIG["num_workers"])
-            FINETUNING_CONFIG["use_autocast"] = get_validated_input("FINE-TUNING: use autocast (mixed precision)?", "bool", "y" if FINETUNING_CONFIG["use_autocast"] else "n")
-            FINETUNING_CONFIG["use_compile"] = get_validated_input("FINE-TUNING: use torch.compile for model compilation?", "bool", "y" if FINETUNING_CONFIG["use_compile"] else "n")
             FINETUNING_CONFIG["use_scheduler"] = get_validated_input("FINE-TUNING: use learning rate scheduler?", "bool", "y" if FINETUNING_CONFIG["use_scheduler"] else "n")
-
-            check_use_compile(FINETUNING_CONFIG)
 
         train(
             data_path="chat-data.json",
@@ -367,8 +340,6 @@ Source: "Build a Large Language Model From Scratch"\n\
             seed=FINETUNING_CONFIG["seed"],
             accumulation_steps=FINETUNING_CONFIG["accumulation_steps"],
             num_workers=FINETUNING_CONFIG["num_workers"],
-            use_autocast=FINETUNING_CONFIG["use_autocast"],
-            use_compile=FINETUNING_CONFIG["use_compile"],
             use_scheduler=FINETUNING_CONFIG["use_scheduler"],
             test_context=chat_to_text(
                 [{"role": "system", "content": FINETUNING_CONFIG["system_context"]}, {"role": "user", "content": FINETUNING_CONFIG["test_prompt"]}],
@@ -389,9 +360,6 @@ Source: "Build a Large Language Model From Scratch"\n\
             CHAT_CONFIG["max_new_tokens"] = get_validated_input("GENERATION: Max new tokens", "int", CHAT_CONFIG["max_new_tokens"])
             CHAT_CONFIG["top_k"] = get_validated_input("GENERATION: top k", "int", CHAT_CONFIG["top_k"])
             CHAT_CONFIG["temperature"] = get_validated_input("GENERATION: temperature", "int", CHAT_CONFIG["temperature"])
-            CHAT_CONFIG["use_compile"] = get_validated_input("GENERATION: use torch.compile for model compilation?", "bool", "y" if CHAT_CONFIG["use_compile"] else "n")
-
-            check_use_compile(CHAT_CONFIG)
 
         chat_loop(
             default_system=CHAT_CONFIG["default_system"],
@@ -400,6 +368,5 @@ Source: "Build a Large Language Model From Scratch"\n\
             top_k=CHAT_CONFIG["top_k"],
             temperature=CHAT_CONFIG["temperature"],
             use_chat_format=CHAT_CONFIG["use_chat_format"],
-            use_compile=CHAT_CONFIG["use_compile"],
             seed=CHAT_CONFIG["seed"]
         )
