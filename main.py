@@ -110,7 +110,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "learning_rate": 0.0005,
         "batch_size": 5,
         "accumulation_steps": 8,
-        "num_workers": 2,
+        "num_workers": 0,
         "use_scheduler": True,
         "test_context": "The meaning of life is",
         "seed": 123
@@ -124,10 +124,10 @@ Source: "Build a Large Language Model From Scratch"\n\
         "learning_rate": 0.0005,
         "batch_size": 5,
         "accumulation_steps": 8,
-        "num_workers": 2,
+        "num_workers": 0,
         "use_scheduler": True,
         "system_context": "You are a helpful assistant.",
-        "test_prompt": "The meaning of life is",
+        "test_prompt": "What is love?",
         "seed": 123
     }
 
