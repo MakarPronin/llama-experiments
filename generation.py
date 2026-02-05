@@ -118,6 +118,7 @@ def chat_loop(
         top_k=1,
         temperature=0,
         use_chat_format=True,
+        use_compile=True,
         seed=123):
     
     torch.manual_seed(seed)
@@ -130,6 +131,14 @@ def chat_loop(
 
     model = Llama3Model(llama32_config)
     model.to(device)
+
+    # Compile (Safe Block)
+    if use_compile:
+        try:
+            print("Compiling model (this may take a minute)...")
+            model = torch.compile(model)
+        except Exception as e:
+            print(f"Compile failed or skipped: {e}")
 
     if os.path.exists(checkpoint_file_path):
         load_checkpoint(model, device, file_path=checkpoint_file_path)

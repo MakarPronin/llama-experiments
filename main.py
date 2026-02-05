@@ -96,31 +96,42 @@ Source: "Build a Large Language Model From Scratch"\n\
     }
 
     PRETRAINING_DATA_PROCESSING_CONFIG = {
-        "max_size_mb": 32,
+        "max_size_mb": 16,
+        "train_ratio": 0.95,
         "strip_headers": True,
         "fallback_encoding": "latin1"
     }
 
     PRETRAINING_CONFIG = {
-        "n_epochs": 1,
+        "n_epochs": 3,
         "print_sample_iter": 100,
         "eval_freq": 100,
-        "save_ckpt_freq": 100,
-        "learning_rate": 0.00005,
+        "ckpt_freq_after_file": 100,
+        "learning_rate": 0.0003,
         "batch_size": 5,
-        "test_context": "What do llamas eat?",
+        "accumulation_steps": 8,
+        "num_workers": 2,
+        "use_autocast": True,
+        "use_compile": True,
+        "use_scheduler": True,
+        "test_context": "The meaning of life is",
         "seed": 123
     }
 
     FINETUNING_CONFIG = {
-        "n_epochs": 1,
+        "n_epochs": 3,
         "print_sample_iter": 100,
         "eval_freq": 100,
-        "save_ckpt_freq": 100,
-        "learning_rate": 0.00005,
+        "ckpt_freq_after_file": 100,
+        "learning_rate": 0.0003,
         "batch_size": 5,
+        "accumulation_steps": 8,
+        "num_workers": 2,
+        "use_autocast": True,
+        "use_compile": True,
+        "use_scheduler": True,
         "system_context": "You are a helpful assistant.",
-        "test_prompt": "What do llamas eat?",
+        "test_prompt": "The meaning of life is",
         "seed": 123
     }
 
@@ -130,6 +141,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "top_k": 1,
         "temperature": 0,
         "use_chat_format": True,
+        "use_compile": True,
         "seed": 123
     }
     #END OF EDITABLE CONFIGS
@@ -224,6 +236,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         change_default_pretraining_data_processing = get_validated_input("PROCESSING PRETRANING DATA: Do you want to change the default pretraining data processing settings?", "bool", "n")
         if change_default_pretraining_data_processing:
             PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"] = get_validated_input("PROCESSING PRETRANING DATA: Max size in MB?", "int", PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"])
+            PRETRAINING_DATA_PROCESSING_CONFIG["train_ratio"] = get_validated_input("PROCESSING PRETRANING DATA: Train ratio?", "float", PRETRAINING_DATA_PROCESSING_CONFIG["train_ratio"])
             PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"] = get_validated_input("PROCESSING PRETRANING DATA: Strip Gutenberg headers? (This will do nothing if files don't contain Gutenberg headers)", "bool", "y" if PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"] else "n")
             PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"] = get_validated_input("PROCESSING PRETRANING DATA: Fallback encoding?", "str", PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"])
             
@@ -232,6 +245,7 @@ Source: "Build a Large Language Model From Scratch"\n\
             "pretraining_data/",
             strip_headers=PRETRAINING_DATA_PROCESSING_CONFIG["strip_headers"],
             fallback_encoding=PRETRAINING_DATA_PROCESSING_CONFIG["fallback_encoding"],
+            train_ratio=PRETRAINING_DATA_PROCESSING_CONFIG["train_ratio"],
             max_size_mb=PRETRAINING_DATA_PROCESSING_CONFIG["max_size_mb"]
         )
 
@@ -279,23 +293,32 @@ Source: "Build a Large Language Model From Scratch"\n\
             PRETRAINING_CONFIG["learning_rate"] = get_validated_input("PRETRAINING: learning rate", "float", PRETRAINING_CONFIG["learning_rate"])
             PRETRAINING_CONFIG["batch_size"] = get_validated_input("PRETRAINING: batch size", "int", PRETRAINING_CONFIG["batch_size"])
             PRETRAINING_CONFIG["n_epochs"] = get_validated_input("PRETRAINING: number of epochs", "int", PRETRAINING_CONFIG["n_epochs"])
-            PRETRAINING_CONFIG["save_ckpt_freq"] = get_validated_input("PRETRAINING: save a checkpoint every ? iterations", "int",  PRETRAINING_CONFIG["save_ckpt_freq"])
             PRETRAINING_CONFIG["seed"] = get_validated_input("PRETRAINING: seed", "int", PRETRAINING_CONFIG["seed"])
             PRETRAINING_CONFIG["eval_freq"] = get_validated_input("PRETRAINING: evaluate every ? iterations", "int", PRETRAINING_CONFIG["eval_freq"])
+            PRETRAINING_CONFIG["ckpt_freq_after_file"] = get_validated_input("PRETRAINING: save checkpoint if the number of iterations after the end of file is greater than: ", "int", PRETRAINING_CONFIG["ckpt_freq_after_file"])
             PRETRAINING_CONFIG["print_sample_iter"] = get_validated_input("PRETRAINING: print a sample every ? iterations", "int", PRETRAINING_CONFIG["print_sample_iter"])
             PRETRAINING_CONFIG["test_context"] = get_validated_input("PRETRAINING: prompt for samples", "str", PRETRAINING_CONFIG["test_context"])
+            PRETRAINING_CONFIG["accumulation_steps"] = get_validated_input("PRETRAINING: gradient accumulation steps", "int", PRETRAINING_CONFIG["accumulation_steps"])
+            PRETRAINING_CONFIG["num_workers"] = get_validated_input("PRETRAINING: number of workers for data loading", "int", PRETRAINING_CONFIG["num_workers"])
+            PRETRAINING_CONFIG["use_autocast"] = get_validated_input("PRETRAINING: use autocast (mixed precision)?", "bool", "y" if PRETRAINING_CONFIG["use_autocast"] else "n")
+            PRETRAINING_CONFIG["use_compile"] = get_validated_input("PRETRAINING: use torch.compile for model compilation?", "bool", "y" if PRETRAINING_CONFIG["use_compile"] else "n")
+            PRETRAINING_CONFIG["use_scheduler"] = get_validated_input("PRETRAINING: use learning rate scheduler?", "bool", "y" if PRETRAINING_CONFIG["use_scheduler"] else "n")
 
         train(
             data_path="pretraining_data/",
             n_epochs=PRETRAINING_CONFIG["n_epochs"],
             print_sample_iter=PRETRAINING_CONFIG["print_sample_iter"],
             eval_freq=PRETRAINING_CONFIG["eval_freq"],
-            save_ckpt_freq=PRETRAINING_CONFIG["save_ckpt_freq"],
+            ckpt_freq_after_file=PRETRAINING_CONFIG["ckpt_freq_after_file"],
             learning_rate=PRETRAINING_CONFIG["learning_rate"],
             batch_size=PRETRAINING_CONFIG["batch_size"],
             test_context=PRETRAINING_CONFIG["test_context"],
             llama32_config=llama32_config,
-            seed=PRETRAINING_CONFIG["seed"]
+            accumulation_steps=PRETRAINING_CONFIG["accumulation_steps"],
+            num_workers=PRETRAINING_CONFIG["num_workers"],
+            use_autocast=PRETRAINING_CONFIG["use_autocast"],
+            use_compile=PRETRAINING_CONFIG["use_compile"],
+            use_scheduler=PRETRAINING_CONFIG["use_scheduler"],
         )
 
 
@@ -307,23 +330,33 @@ Source: "Build a Large Language Model From Scratch"\n\
             FINETUNING_CONFIG["learning_rate"] = get_validated_input("FINE-TUNING: learning rate", "float", FINETUNING_CONFIG["learning_rate"])
             FINETUNING_CONFIG["batch_size"] = get_validated_input("FINE-TUNING: batch size", "int", FINETUNING_CONFIG["batch_size"])
             FINETUNING_CONFIG["n_epochs"] = get_validated_input("FINE-TUNING: number of epochs", "int", FINETUNING_CONFIG["n_epochs"])
-            FINETUNING_CONFIG["save_ckpt_freq"] = get_validated_input("FINE-TUNING: save a checkpoint every ? iterations", "int",  FINETUNING_CONFIG["save_ckpt_freq"])
             FINETUNING_CONFIG["seed"] = get_validated_input("FINE-TUNING: seed", "int", FINETUNING_CONFIG["seed"])
             FINETUNING_CONFIG["eval_freq"] = get_validated_input("FINE-TUNING: evaluate every ? iterations", "int", FINETUNING_CONFIG["eval_freq"])
+            FINETUNING_CONFIG["ckpt_freq_after_file"] = get_validated_input("FINE-TUNING: save checkpoint if the number of iterations after the end of file is greater than: ", "int", FINETUNING_CONFIG["ckpt_freq_after_file"])
             FINETUNING_CONFIG["print_sample_iter"] = get_validated_input("FINE-TUNING: print a sample every ? iterations", "int", FINETUNING_CONFIG["print_sample_iter"])
             FINETUNING_CONFIG["test_prompt"] = get_validated_input("FINE-TUNING: prompt for samples", "str", FINETUNING_CONFIG["test_prompt"])
             FINETUNING_CONFIG["system_context"] = get_validated_input("FINE-TUNING: default system message", "str", FINETUNING_CONFIG["system_context"])
+            FINETUNING_CONFIG["accumulation_steps"] = get_validated_input("FINE-TUNING: gradient accumulation steps", "int", FINETUNING_CONFIG["accumulation_steps"])
+            FINETUNING_CONFIG["num_workers"] = get_validated_input("FINE-TUNING: number of workers for data loading", "int", FINETUNING_CONFIG["num_workers"])
+            FINETUNING_CONFIG["use_autocast"] = get_validated_input("FINE-TUNING: use autocast (mixed precision)?", "bool", "y" if FINETUNING_CONFIG["use_autocast"] else "n")
+            FINETUNING_CONFIG["use_compile"] = get_validated_input("FINE-TUNING: use torch.compile for model compilation?", "bool", "y" if FINETUNING_CONFIG["use_compile"] else "n")
+            FINETUNING_CONFIG["use_scheduler"] = get_validated_input("FINE-TUNING: use learning rate scheduler?", "bool", "y" if FINETUNING_CONFIG["use_scheduler"] else "n")
 
         train(
             data_path="chat-data.json",
             n_epochs=FINETUNING_CONFIG["n_epochs"],
             print_sample_iter=FINETUNING_CONFIG["print_sample_iter"],
             eval_freq=FINETUNING_CONFIG["eval_freq"],
-            save_ckpt_freq=FINETUNING_CONFIG["save_ckpt_freq"],
+            ckpt_freq_after_file=FINETUNING_CONFIG["ckpt_freq_after_file"],
             learning_rate=FINETUNING_CONFIG["learning_rate"],
             batch_size=FINETUNING_CONFIG["batch_size"],
             llama32_config=llama32_config,
             seed=FINETUNING_CONFIG["seed"],
+            accumulation_steps=FINETUNING_CONFIG["accumulation_steps"],
+            num_workers=FINETUNING_CONFIG["num_workers"],
+            use_autocast=FINETUNING_CONFIG["use_autocast"],
+            use_compile=FINETUNING_CONFIG["use_compile"],
+            use_scheduler=FINETUNING_CONFIG["use_scheduler"],
             test_context=chat_to_text(
                 [{"role": "system", "content": FINETUNING_CONFIG["system_context"]}, {"role": "user", "content": FINETUNING_CONFIG["test_prompt"]}],
                 prep_for_generation=True,
@@ -337,12 +370,13 @@ Source: "Build a Large Language Model From Scratch"\n\
     if should_chat:
         should_change_default_chat = get_validated_input("GENERATION: Would you like to change default chat settings?", "bool", "n")
         if should_change_default_chat:
-            use_chat_format = get_validated_input("GENERATION: Use chat format? Using chat format is strongly recommended if the model is fine-tuned for a conversation.", "bool", "y" if CHAT_CONFIG["use_chat_format"] else "n")
-            seed = get_validated_input("GENERATION: seed", "int", CHAT_CONFIG["seed"])
-            default_system = get_validated_input("GENERATION: default system message", "str", CHAT_CONFIG["default_system"])
-            max_new_tokens = get_validated_input("GENERATION: Max new tokens", "int", CHAT_CONFIG["max_new_tokens"])
-            top_k = get_validated_input("GENERATION: top k", "int", CHAT_CONFIG["top_k"])
-            temperature = get_validated_input("GENERATION: temperature", "int", CHAT_CONFIG["temperature"])
+            CHAT_CONFIG["use_chat_format"] = get_validated_input("GENERATION: Use chat format? Using chat format is strongly recommended if the model is fine-tuned for a conversation.", "bool", "y" if CHAT_CONFIG["use_chat_format"] else "n")
+            CHAT_CONFIG["seed"] = get_validated_input("GENERATION: seed", "int", CHAT_CONFIG["seed"])
+            CHAT_CONFIG["default_system"] = get_validated_input("GENERATION: default system message", "str", CHAT_CONFIG["default_system"])
+            CHAT_CONFIG["max_new_tokens"] = get_validated_input("GENERATION: Max new tokens", "int", CHAT_CONFIG["max_new_tokens"])
+            CHAT_CONFIG["top_k"] = get_validated_input("GENERATION: top k", "int", CHAT_CONFIG["top_k"])
+            CHAT_CONFIG["temperature"] = get_validated_input("GENERATION: temperature", "int", CHAT_CONFIG["temperature"])
+            CHAT_CONFIG["use_compile"] = get_validated_input("GENERATION: use torch.compile for model compilation?", "bool", "y" if CHAT_CONFIG["use_compile"] else "n")
 
         chat_loop(
             default_system=CHAT_CONFIG["default_system"],
@@ -351,5 +385,6 @@ Source: "Build a Large Language Model From Scratch"\n\
             top_k=CHAT_CONFIG["top_k"],
             temperature=CHAT_CONFIG["temperature"],
             use_chat_format=CHAT_CONFIG["use_chat_format"],
+            use_compile=CHAT_CONFIG["use_compile"],
             seed=CHAT_CONFIG["seed"]
         )

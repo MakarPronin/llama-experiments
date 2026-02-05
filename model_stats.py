@@ -72,12 +72,12 @@ def get_model_stats(model):
     print("Weight tying (Checks if PyTorch uses the same underlying memory):", model.tok_emb.weight.data_ptr() == model.out_head.weight.data_ptr())
 
 
-def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
+def plot_losses(epochs_seen, tokens_seen, file_train_losses, val_losses):
     fig, ax1 = plt.subplots(figsize=(5, 3))
 
     # Plot training and validation loss against epochs
-    ax1.plot(epochs_seen, train_losses, label="Training loss")
-    ax1.plot(epochs_seen, val_losses, linestyle="-.", label="Validation loss")
+    ax1.plot(epochs_seen, file_train_losses, label="Training loss (per file)")
+    ax1.plot(epochs_seen, val_losses, linestyle="-.", label="Validation loss (static)")
     ax1.set_xlabel("Epochs")
     ax1.set_ylabel("Loss")
     ax1.legend(loc="upper right")
@@ -85,7 +85,7 @@ def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
 
     # Create a second x-axis for tokens seen
     ax2 = ax1.twiny()  # Create a second x-axis that shares the same y-axis
-    ax2.plot(tokens_seen, train_losses, alpha=0)  # Invisible plot for aligning ticks
+    ax2.plot(tokens_seen, file_train_losses, alpha=0)  # Invisible plot for aligning ticks
     ax2.set_xlabel("Tokens seen")
 
     fig.tight_layout()  # Adjust layout to make room

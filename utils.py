@@ -126,33 +126,60 @@ def download_file(file_path, url, show_progress=True, verbose=True, verify=True)
             print(f"ERROR: Download incomplete for {file_path}! Expected {total_size}, got {progress_bar.n}")
         
 
-def save_checkpoint(model, optimizer=None, file_path="model_checkpoint.pth"):
-    #Saves the model weights and optimizer state.
-    print(f"Saving checkpoint to {file_path}...")
-    checkpoint = {
-        "model_state_dict": model.state_dict(),
-    }
-    if optimizer:
-        checkpoint["optimizer_state_dict"] = optimizer.state_dict()
-    torch.save(checkpoint, file_path)
-    print("Saved.")
-
-
-def load_checkpoint(model, device, optimizer=None, file_path="model_checkpoint.pth"):
-    #Loads the model weights and optimizer state.
-    if not os.path.exists(file_path):
-        print(f"No checkpoint found at {file_path}. Starting from scratch.")
-        return
-
-    print(f"Loading checkpoint from {file_path}...")
-
-    # map_location ensures we load onto the correct device (CPU/GPU)
-    checkpoint = torch.load(file_path, map_location=device)
+def save_checkpoint(model, optimizer=None, scheduler=None, epoch=None, file_index=None, global_step=None, 
+                    tokens_seen=None, file_path="model_checkpoint.pth"):
     
-    model.load_state_dict(checkpoint["model_state_dict"])
-    if optimizer:
-        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    print("Loaded.")
+    if (optimizer is None or epoch is None or file_index is None or global_step is None or 
+        tokens_seen is None):
+        checkpoint_type = "inference"
+    else:
+        checkpoint_type = "training"
+    
+    checkpoint_state = {
+        'type': checkpoint_type,
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict() if optimizer else None,
+        'scheduler': scheduler.state_dict() if scheduler else None,
+        'epoch': epoch,
+        'file_index': file_index,   # Which file we were working on
+        'global_step': global_step, # Total optimization steps
+        'tokens_seen': tokens_seen, # For logging
+    }
+
+    torch.save(checkpoint_state, file_path)
+    print(f"Checkpoint saved!")
+
+def load_checkpoint(model, device, optimizer=None, scheduler=None, file_path="model_checkpoint.pth"):
+    start_epoch = 0
+    start_file_index = 0
+    global_step = 0
+    tokens_seen = 0
+
+    if os.path.exists(file_path):
+        print(f"Resuming from checkpoint: {file_path}")
+        checkpoint = torch.load(file_path, map_location=device)
+
+        # Load weights
+        model.load_state_dict(checkpoint['model'])
+        if (optimizer):
+            optimizer.load_state_dict(checkpoint['optimizer'])
+        
+        # Load Scheduler (if it exists in both config and checkpoint)
+        if scheduler and checkpoint.get('scheduler'):
+            scheduler.load_state_dict(checkpoint['scheduler'])
+
+        # Load Metadata
+        checkpoint_type = checkpoint.get('type', 'inference')
+        start_epoch = checkpoint.get('epoch', 0)
+        start_file_index = checkpoint.get('file_index', 0)
+        global_step = checkpoint.get('global_step', 0)
+        tokens_seen = checkpoint.get('tokens_seen', 0)
+        
+        print(f"Checkpoint loaded.")
+    else:
+        print("No checkpoint found. Starting from scratch.")
+
+    return checkpoint_type, start_epoch, start_file_index, global_step, tokens_seen
 
 
 def download_gutenberg_books(
@@ -290,49 +317,125 @@ def strip_gutenberg_headers(text):
     return text[start_index:end_index].strip()
 
 
-def combine_files(source_dir="raw_pretraining_data/", target_dir="pretraining_data/", max_size_mb=500, strip_headers=True, start_separator="<|begin_of_text|>", end_separator="<|end_of_text|>", fallback_encoding="latin1"):
+def combine_files(
+    source_dir="raw_pretraining_data/", 
+    target_dir="pretraining_data/", 
+    train_ratio=0.90, 
+    max_size_mb=500,  # Caps BOTH training and validation files
+    strip_headers=True, 
+    start_separator="<|begin_of_text|>", 
+    end_separator="<|end_of_text|>", 
+    fallback_encoding="latin1"
+):
+    """
+    Iterates source files, splits them into Train/Val.
+    - Train parts are combined into chunks (max_size_mb).
+    - Validation parts are combined into chunks (max_size_mb).
+    """
+    
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
     all_files = [os.path.join(path, name) for path, subdirs, files in os.walk(source_dir)
                  for name in files if name.endswith((".txt", ".txt.utf8"))]
 
-    current_content = []
-    current_size = 0
-    file_counter = 1
+    # --- Buffers ---
+    train_buffer = []
+    val_buffer = []
+    
+    # --- Size Trackers ---
+    current_train_size = 0
+    current_val_size = 0
+    
+    # --- File Counters ---
+    train_file_counter = 1
+    val_file_counter = 1
 
-    for file_path in tqdm(all_files, desc="Processing books"):
+    print(f"Processing {len(all_files)} files.")
+    print(f"Split ratio: {train_ratio*100}% Train / {(1-train_ratio)*100}% Val")
+    print(f"File Size Cap: {max_size_mb} MB")
+
+    for file_path in tqdm(all_files, desc="Splitting & Combining"):
+        
+        # 1. READ
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
         except UnicodeDecodeError:
-            # Attempt to read the file with a fallback encoding
             with open(file_path, "r", encoding=fallback_encoding) as file:
                 content = file.read()
 
         if strip_headers:
             content = strip_gutenberg_headers(content)
 
-        # Regular expression to replace multiple blank lines with a single blank line
+        # Normalize newlines
         content = re.sub(r"\n\s*\n", "\n\n", content)
-        estimated_size = len(content.encode("utf-8"))
 
-        if current_size + estimated_size > max_size_mb * 1024 * 1024:
-            add_text_to_file(current_content, target_dir, f"combined_{file_counter}.txt", start_separator, end_separator)
-            file_counter += 1
-            current_content = [content]
-            current_size = estimated_size
-        else:
-            current_content.append(content)
-            current_size += estimated_size
+        # 2. SPLIT
+        split_idx = int(len(content) * train_ratio)
+        train_part = content[:split_idx]
+        val_part = content[split_idx:]
 
-    if current_content:
-        add_text_to_file(current_content, target_dir, f"combined_{file_counter}.txt", start_separator, end_separator)
-    return file_counter
+        # 3. PROCESS TRAINING PART
+        if train_part.strip():
+            train_part_size = len(train_part.encode("utf-8"))
+            
+            if current_train_size + train_part_size > max_size_mb * 1024 * 1024:
+                add_buffer_to_file(train_buffer, target_dir, f"train_{train_file_counter}.txt", start_separator, end_separator)
+                train_file_counter += 1
+                train_buffer = [train_part]
+                current_train_size = train_part_size
+            else:
+                train_buffer.append(train_part)
+                current_train_size += train_part_size
 
-def add_text_to_file(content, target_dir, file_name, start_separator, end_separator):
-        target_file_path = os.path.join(target_dir, file_name)
-        with open(target_file_path, "w", encoding="utf-8") as target_file:
-            # Create a generator that wraps each text and joins them
-            formatted_content = "".join(f"{start_separator}{text}{end_separator}" for text in content)
-            target_file.write(formatted_content)
+        # 4. PROCESS VALIDATION PART
+        if val_part.strip():
+            val_part_size = len(val_part.encode("utf-8"))
+            
+            if current_val_size + val_part_size > max_size_mb * 1024 * 1024:
+                add_buffer_to_file(val_buffer, target_dir, f"validation_{val_file_counter}.txt", start_separator, end_separator)
+                val_file_counter += 1
+                val_buffer = [val_part]
+                current_val_size = val_part_size
+            else:
+                val_buffer.append(val_part)
+                current_val_size += val_part_size
+
+    # 5. FINAL FLUSH
+    if train_buffer:
+         add_buffer_to_file(train_buffer, target_dir, f"train_{train_file_counter}.txt", start_separator, end_separator)
+    if val_buffer:
+         add_buffer_to_file(val_buffer, target_dir, f"validation_{val_file_counter}.txt", start_separator, end_separator)
+
+    print(f"\nDone.")
+    print(f" -> Created {train_file_counter} Training files")
+    print(f" -> Created {val_file_counter} Validation files")
+    return train_file_counter, val_file_counter
+
+def add_buffer_to_file(content_list, target_dir, filename, start_sep, end_sep):
+    """Helper to write a buffer list to a file"""
+    out_path = os.path.join(target_dir, filename)
+    with open(out_path, "w", encoding="utf-8") as f:
+        for text in content_list:
+            if text.strip():
+                f.write(f"{start_sep}\n{text}\n{end_sep}\n")
+
+
+def get_autocast_config(device):
+    """
+    Probes the hardware to find the best data type.
+    Returns the dtype (bfloat16 or float16) and device string.
+    """
+    if device.type == 'cpu':
+        return 'cpu', torch.bfloat16 # CPU is always bfloat16
+        
+    # Default to float16 (Safe for almost all GPUs/Macs)
+    dtype = torch.float16
+    
+    # Try bfloat16 if we are on CUDA. 
+    # If the hardware doesn't support it, this block handles it safely.
+    if device.type == 'cuda' and torch.cuda.is_bf16_supported():
+        dtype = torch.bfloat16
+
+    return device.type, dtype
