@@ -409,8 +409,8 @@ def combine_files(
          add_buffer_to_file(val_buffer, target_dir, f"validation_{val_file_counter}.txt", start_separator, end_separator)
 
     print(f"\nDone.")
-    print(f" -> Created {train_file_counter} Training files")
-    print(f" -> Created {val_file_counter} Validation files")
+    print(f" -> Created Training files: {train_file_counter}")
+    print(f" -> Created Validation files: {val_file_counter}")
     return train_file_counter, val_file_counter
 
 def add_buffer_to_file(content_list, target_dir, filename, start_sep, end_sep):
