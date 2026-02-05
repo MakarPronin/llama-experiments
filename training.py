@@ -15,6 +15,7 @@
 
 import os
 import time
+import math
 from pathlib import Path
 
 import torch
@@ -49,8 +50,6 @@ def get_loader(file_path, tokenizer, llama32_config, device, batch_size, num_wor
 
     return train_loader
 
-
-import math
 
 def calculate_total_steps(all_files, tokenizer, llama32_config, batch_size, accumulation_steps, num_workers, n_epochs):
     """
@@ -207,13 +206,13 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
 
             if len(train_loader) == 0: continue
 
-            print(f"Processing file {index+1}/{total_files} ({len(train_loader)} batches): {file_path}.")
+            print(f"Processing file {index+1}/{total_files} ({math.ceil(len(train_loader)/accumulation_steps)} steps): {file_path}.")
             model.train()
             accum_track = 0
             
             for input_batch, target_batch in train_loader:
-                loss = calc_loss_batch(input_batch, target_batch, model, device)
-                loss = loss / accumulation_steps
+                orig_loss = calc_loss_batch(input_batch, target_batch, model, device)
+                loss = orig_loss / accumulation_steps
 
                 loss.backward()
 
@@ -221,14 +220,14 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
 
                 if accum_track % accumulation_steps == 0:
                     global_step = training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
-                        eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss.item())
+                        eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, orig_loss.item())
 
                 tokens_seen += input_batch.numel()
 
             # End of Book Step. Removes accumulated gradients.
             if accum_track % accumulation_steps != 0:
                 global_step = training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
-                    eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss.item())
+                    eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, orig_loss.item())
                 
             print_eta(start_time, book_start_time, index, total_files)
 
