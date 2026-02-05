@@ -352,7 +352,7 @@ def combine_files(
     val_file_counter = 1
 
     print(f"Processing {len(all_files)} files.")
-    print(f"Split ratio: {train_ratio*100}% Train / {(1-train_ratio)*100}% Val")
+    print(f"Split ratio: {train_ratio*100:.1f}% Train / {(1-train_ratio)*100:.1f}% Val")
     print(f"File Size Cap: {max_size_mb} MB")
 
     for file_path in tqdm(all_files, desc="Splitting & Combining"):
