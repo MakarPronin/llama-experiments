@@ -68,7 +68,7 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     llama32_config=LLAMA32_CONFIG
 
-    #EDITABLE CONFIGS SECTION
+    # EDITABLE CONFIGS SECTION
     LLAMA32_CONFIG_CUSTOM = {
         "vocab_size": 128256,            # Vocabulary size
         "context_length": 1024,          # Context length that was used to train the model
@@ -139,6 +139,9 @@ Source: "Build a Large Language Model From Scratch"\n\
         "use_chat_format": True,
         "seed": 123
     }
+    # END OF EDITABLE CONFIGS SECTION
+
+
 
     change_config = get_validated_input('MODEL CONFIG: Do you wish to change the default configuration (1B Llama 3.2)? If you change, make sure all downloaded and generated model files are valid. Maybe delete the existing files to provide a clean foundation for the updated model version.', "bool", "n")
     if (change_config):
