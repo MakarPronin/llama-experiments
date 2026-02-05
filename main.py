@@ -112,7 +112,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "accumulation_steps": 8,
         "num_workers": 2,
         "use_autocast": True,
-        "use_compile": True,
+        "use_compile": False,
         "use_scheduler": True,
         "test_context": "The meaning of life is",
         "seed": 123
@@ -128,7 +128,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "accumulation_steps": 8,
         "num_workers": 2,
         "use_autocast": True,
-        "use_compile": True,
+        "use_compile": False,
         "use_scheduler": True,
         "system_context": "You are a helpful assistant.",
         "test_prompt": "The meaning of life is",
@@ -141,7 +141,7 @@ Source: "Build a Large Language Model From Scratch"\n\
         "top_k": 1,
         "temperature": 0,
         "use_chat_format": True,
-        "use_compile": True,
+        "use_compile": False,
         "seed": 123
     }
     #END OF EDITABLE CONFIGS
