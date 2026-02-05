@@ -211,8 +211,9 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
             accum_track = 0
             
             for input_batch, target_batch in train_loader:
-                orig_loss = calc_loss_batch(input_batch, target_batch, model, device)
-                loss = orig_loss / accumulation_steps
+                loss = calc_loss_batch(input_batch, target_batch, model, device)
+                loss_num = loss.item()
+                loss = loss / accumulation_steps
 
                 loss.backward()
 
@@ -220,14 +221,14 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
 
                 if accum_track % accumulation_steps == 0:
                     global_step = training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
-                        eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, orig_loss.item())
+                        eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss_num)
 
                 tokens_seen += input_batch.numel()
 
             # End of Book Step. Removes accumulated gradients.
             if accum_track % accumulation_steps != 0:
                 global_step = training_step(model, device, llama32_config, tokenizer, val_loader, optimizer, scheduler, eval_freq,
-                    eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, orig_loss.item())
+                    eval_iter, test_context, batch_train_losses, val_losses, track_tokens_seen, global_step, tokens_seen, epoch, print_sample_iter, loss_num)
                 
             print_eta(start_time, book_start_time, index, total_files)
 
