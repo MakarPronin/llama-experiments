@@ -131,7 +131,7 @@ def save_checkpoint(model, optimizer=None, scheduler=None, epoch=None, file_inde
     
     if (optimizer is None or epoch is None or file_index is None or global_step is None or 
         tokens_seen is None):
-        checkpoint_type = "inference"
+        checkpoint_type = "model_only"
     else:
         checkpoint_type = "training"
     
@@ -150,36 +150,28 @@ def save_checkpoint(model, optimizer=None, scheduler=None, epoch=None, file_inde
     print(f"Checkpoint saved!")
 
 def load_checkpoint(model, device, optimizer=None, scheduler=None, file_path="model_checkpoint.pth"):
-    checkpoint_type = "inference"
-    start_epoch = 0
-    start_file_index = 0
-    global_step = 0
-    tokens_seen = 0
+    if not os.path.exists(file_path):
+        return
+    
+    print(f"Loading checkpoint: {file_path}")
+    checkpoint = torch.load(file_path, map_location=device)
 
-    if os.path.exists(file_path):
-        print(f"Resuming from checkpoint: {file_path}")
-        checkpoint = torch.load(file_path, map_location=device)
+    # Load weights
+    model.load_state_dict(checkpoint['model'])
+    if (optimizer):
+        optimizer.load_state_dict(checkpoint['optimizer'])
+    
+    # Load Scheduler (if it exists in both config and checkpoint)
+    if scheduler and checkpoint.get('scheduler'):
+        scheduler.load_state_dict(checkpoint['scheduler'])
 
-        # Load weights
-        model.load_state_dict(checkpoint['model'])
-        if (optimizer):
-            optimizer.load_state_dict(checkpoint['optimizer'])
-        
-        # Load Scheduler (if it exists in both config and checkpoint)
-        if scheduler and checkpoint.get('scheduler'):
-            scheduler.load_state_dict(checkpoint['scheduler'])
-
-        # Load Metadata
-        checkpoint_type = checkpoint.get('type', 'inference')
-        start_epoch = checkpoint.get('epoch', 0)
-        start_file_index = checkpoint.get('file_index', 0)
-        global_step = checkpoint.get('global_step', 0)
-        tokens_seen = checkpoint.get('tokens_seen', 0)
-        
-        print(f"Checkpoint loaded.")
-    else:
-        print("No checkpoint found. Starting from scratch.")
-
+    # Load Metadata
+    checkpoint_type = checkpoint['type']
+    start_epoch = checkpoint['epoch']
+    start_file_index = checkpoint['file_index']
+    global_step = checkpoint['global_step']
+    tokens_seen = checkpoint['tokens_seen']
+    
     return checkpoint_type, start_epoch, start_file_index, global_step, tokens_seen
 
 
