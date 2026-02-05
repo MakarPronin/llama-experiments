@@ -336,15 +336,13 @@ def train(
 
     # --- LOAD STATE (If Exists) ---
     checkpoint_type = ''
-    if not os.path.exists(checkpoint_file_path):
-        print(f"No checkpoint found at {checkpoint_file_path}. Starting from scratch.")
-    else:    
+    if os.path.exists(checkpoint_file_path):  
         checkpoint_type, start_epoch, start_file_index, start_global_step, start_tokens = load_checkpoint(
             model, device, optimizer, scheduler, checkpoint_file_path
         )
 
     if (checkpoint_type != 'training'):
-        print(f"Training will be started from epoch 1, file 1, step 1.")
+        print(f"No training checkpoint found. Training will be started from epoch 1, file 1, step 1.")
         start_epoch = 0
         start_file_index = 0
         start_global_step = 0
