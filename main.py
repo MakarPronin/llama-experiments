@@ -56,7 +56,6 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     import os
     import json
-    os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True" # helps torch to squize into tight RAM spaces
     import torch
     from training import train
     from generation import chat_loop
