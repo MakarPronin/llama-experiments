@@ -161,7 +161,7 @@ def training_step(model, device, llama32_config, tokenizer, val_loader, optimize
     # --- GENERATION ---
     if global_step % print_sample_iter == 0:
         model.eval()
-        print(f"\n[Generating sample at Step {global_step}]")
+        print(f"[Generating sample at Step {global_step}]")
         out = generate_text_simple(model, llama32_config, tokenizer, device, test_context)
         print(f"Output: {out.replace('\n', ' ')}\n") 
         model.train()
