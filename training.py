@@ -186,7 +186,7 @@ def train_model_simple(model, llama32_config, optimizer, device, n_epochs,
     
     start_time = time.time()
 
-    print(f"Training. Epoch: {start_epoch+1}, File Index: {start_file_index}")
+    print(f"Training. Starting from epoch {start_epoch+1}, file {start_file_index+1}, step {global_step+1}.")
 
     # Loop from start_epoch instead of 0
     for epoch in range(start_epoch, n_epochs):
