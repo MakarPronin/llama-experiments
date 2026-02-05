@@ -56,6 +56,7 @@ Source: "Build a Large Language Model From Scratch"\n\
 
     import os
     import json
+    os.environ["PYTORCH_ALLOC_CONF"] = "expandable_segments:True" # helps torch to squize into tight RAM spaces
     import torch
     from training import train
     from generation import chat_loop
@@ -108,8 +109,8 @@ Source: "Build a Large Language Model From Scratch"\n\
         "eval_freq": 2,
         "ckpt_freq_after_file": 2,
         "learning_rate": 0.0005,
-        "batch_size": 5,
-        "accumulation_steps": 8,
+        "batch_size": 4,
+        "accumulation_steps": 10,
         "num_workers": 0,
         "use_scheduler": True,
         "test_context": "The meaning of life is",
@@ -122,8 +123,8 @@ Source: "Build a Large Language Model From Scratch"\n\
         "eval_freq": 2,
         "ckpt_freq_after_file": 2,
         "learning_rate": 0.0005,
-        "batch_size": 5,
-        "accumulation_steps": 8,
+        "batch_size": 4,
+        "accumulation_steps": 10,
         "num_workers": 0,
         "use_scheduler": True,
         "system_context": "You are a helpful assistant.",
