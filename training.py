@@ -82,8 +82,8 @@ def calculate_total_steps(all_files, tokenizer, llama32_config, batch_size, accu
         
         total_steps_per_epoch += steps_in_file
         
-        # Print progress every 10 files
-        if (i + 1) % 10 == 0:
+        # Print progress
+        if (i + 1) % 10 == 0 or i == len(all_files) - 1:
             print(f" - Scanned {i + 1}/{len(all_files)} files...")
 
     total_training_steps = total_steps_per_epoch * n_epochs
@@ -338,7 +338,7 @@ def train(
         n_epochs=n_epochs,
         eval_freq=eval_freq,
         ckpt_freq_after_file=ckpt_freq_after_file,
-        eval_iter=5,
+        eval_iter=batch_size,
         print_sample_iter=print_sample_iter,
         test_context=test_context,
         tokenizer=tokenizer,
