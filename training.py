@@ -323,7 +323,7 @@ def train(
         )
 
     if (checkpoint_type != 'training'):
-        print(f"No training checkpoint found. Training will be started from epoch 1, file 1, step 1.")
+        print(f"No training checkpoint found. Training will be started from the beginning.")
         start_epoch = 0
         start_file_index = 0
         start_global_step = 0
