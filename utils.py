@@ -65,8 +65,8 @@ def print_eta(start_time, book_start_time, index, total_files):
     book_end_time = time.time()  # End time of processing this book
     elapsed_time = book_end_time - book_start_time
     total_elapsed_time = book_end_time - start_time
-    books_remaining = total_files - index
-    average_time_per_book = total_elapsed_time / index
+    books_remaining = total_files - (index + 1)
+    average_time_per_book = total_elapsed_time / (index + 1)
     eta = average_time_per_book * books_remaining
 
     book_h, book_m, book_s = convert_time(elapsed_time)
