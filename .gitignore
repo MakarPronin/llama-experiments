@@ -9,6 +9,7 @@ instruction-data.json
 chat-data.json
 model_checkpoint.pth
 loss-plot_*.pdf
+output.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
