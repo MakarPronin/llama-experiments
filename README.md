@@ -4,9 +4,21 @@ Code that facilitates experimentation with Llama 3.2 models for non-computer sci
 # Instructions
 Run main.py as an administrator from its folder (/llama_experiments). All further instructions will be provided on the screen.
 
+
+
+# Logging Output to File
+
+To run the script and save both the output and errors to a log file (appending to it) while still seeing everything on the console, use the following commands:
+
+### Linux / macOS / Git Bash
+python main.py | tee -a output.txt
+
+### Windows PowerShell
+python main.py | Tee-Object -FilePath output.txt -Append
+
+
+
 # License
-
-
 Modified by Makar Pronin (Artificial World) to facilitate experimentation
 with Llama models for non-computer science backgrounds.
 
