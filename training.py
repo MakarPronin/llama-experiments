@@ -250,7 +250,7 @@ def train(
         print_sample_iter=2,
         eval_freq=2,
         ckpt_freq_after_file=2,
-        learning_rate=0.0005,
+        learning_rate=0.0001,
         batch_size=4,
         accumulation_steps=8,
         num_workers=0,
