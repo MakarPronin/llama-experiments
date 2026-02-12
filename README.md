@@ -11,10 +11,10 @@ Run main.py as an administrator from its folder (/llama_experiments). All furthe
 To run the script and save both the output and errors to a log file (appending to it) while still seeing everything on the console, use the following commands:
 
 ### Linux / macOS / Git Bash
-python main.py | tee -a output.txt
+python -u main.py | tee -a output.txt
 
 ### Windows PowerShell
-python main.py | Tee-Object -FilePath output.txt -Append
+python -u main.py | Tee-Object -FilePath "output.txt" -Append
 
 
 
